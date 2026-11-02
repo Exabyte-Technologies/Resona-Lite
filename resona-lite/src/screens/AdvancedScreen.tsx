@@ -1,3 +1,5 @@
+import { useTutorial } from '../tutorial-context';
+import LayerBalanceControls from '../components/LayerBalanceControls';
 import { MotionPressable, SelectionWash } from '../motion';
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -64,6 +66,7 @@ export default function AdvancedScreen({
   const colors = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [focusedBand, setFocusedBand] = useState<number | null>(null);
+  const openTutorial = useTutorial();
 
   return (
     <>
@@ -246,36 +249,11 @@ export default function AdvancedScreen({
           <Text style={styles.sectionNote}>
             Set each layer while it plays alone or alongside the others.
           </Text>
-          <View style={styles.controlList}>
-            <RangeControl
-              compact
-              title="Binaural beats"
-              description="Overall binaural output"
-              value={settings.binauralVolume}
-              minimum={0}
-              maximum={100}
-              onChange={(value) => onSettingChange('binauralVolume', value)}
-            />
-            <RangeControl
-              compact
-              title="Ambient music"
-              description="Overall ambient output"
-              value={settings.ambientVolume}
-              minimum={0}
-              maximum={100}
-              onChange={(value) => onSettingChange('ambientVolume', value)}
-            />
-            <RangeControl
-              compact
-              title="Noise generator"
-              description="Overall noise output"
-              value={settings.noiseVolume}
-              minimum={0}
-              maximum={100}
-              onChange={(value) => onSettingChange('noiseVolume', value)}
-            />
-          </View>
+          <LayerBalanceControls settings={settings} onChange={onSettingChange} />
         </Panel>
+        <MotionPressable accessibilityRole="button" accessibilityLabel="Replay quick tour" onPress={openTutorial} style={styles.tourLink}>
+          <Text style={[styles.tourLinkText, { color:colors.muted }]}>Quick tour</Text>
+        </MotionPressable>
       </ScrollView>
     </>
   );
@@ -384,6 +362,8 @@ function capitalize(noise: NoiseType) {
 
 function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
+    tourLink:{ minHeight:44, alignSelf:'center', justifyContent:'center', paddingHorizontal:16, marginTop:8 },
+    tourLinkText:{ fontFamily:fonts.body, fontSize:13, textDecorationLine:'underline' },
     content: {
       paddingHorizontal: spacing.page,
       paddingTop: spacing.sm,

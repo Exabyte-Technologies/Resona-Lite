@@ -28,10 +28,11 @@ music is made on your device.
 
 Choose **Sleep**, **Meditation**, **Focus** or **Awake** to set the feel of your
 soundscape. Start or pause with one tap, and adjust the overall volume without
-leaving Home.
+leaving Home. The **Layer balance** button on the playing card opens a small
+mixer over Home, so you can adjust the three tracks while you listen.
 
 A short tour welcomes you on first launch. You can skip it, go back through the
-steps, or open **Quick tour** in the header whenever you want a reminder.
+steps, or open **Quick tour** at the bottom of Advanced whenever you want a reminder.
 
 ## Make it your own
 
@@ -89,6 +90,7 @@ RESONA_SOURCE=/path/to/Resona/resona/static/js/audio.js node scripts/verify-rend
 # esbuild + jsdom: check the tutorial flow and saved completion.
 node scripts/verify-tutorial.cjs
 node scripts/verify-tutorial.cjs --motion
+node scripts/verify-home-mixer.cjs
 ```
 
 The audio comparison uses matching random input. Separate listening sessions can

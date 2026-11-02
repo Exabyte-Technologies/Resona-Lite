@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { AccessibilityInfo, Animated, Easing, Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon, { type IconName } from './Icon';
+import BlurBackdrop from './BlurBackdrop';
 import { MotionPressable, useReducedMotion } from '../motion';
 import { fonts, useThemeColors, type ThemeColors } from '../theme';
 
@@ -9,7 +10,7 @@ const steps = [
   { eyebrow:'A little space for you', title:'Find your kind of quiet', description:'On Home, choose Sleep, Meditation, Focus or Awake. Each mood gently tunes your soundscape. You can change it whenever you like.', hint:'No setup needed. Just choose how you want to feel.', icon:'meditation' },
   { eyebrow:'Your first listening session', title:'Press play. Settle in.', description:'Tap the round play button to start ambient music and binaural beats together. Use Master volume to find a comfortable level, and tap again to pause.', hint:'Headphones help you hear the separate binaural tones.', icon:'headphones' },
   { eyebrow:'Make it your own', title:'Shape your sound', description:'Open Advanced to blend ambient layers, choose an atmosphere and tonal centre, or add rain, ocean and other noise textures. Each track has its own play button and volume.', hint:'Start with small changes. You can keep things simple on Home.', icon:'tune' },
-  { eyebrow:'Let the harmony unfold', title:'Explore living chords', description:'In Advanced, find Chord progression and tap Generate & apply. Starting chords are optional. Try C Amin F G, then turn on Continuous sets for evolving harmony.', hint:'The chord model runs on your device. Replay this tour any time using Quick tour.', icon:'layers' },
+  { eyebrow:'Let the harmony unfold', title:'Explore living chords', description:'In Advanced, find Chord progression and tap Generate & apply. Starting chords are optional. Try C Amin F G, then turn on Continuous sets for evolving harmony.', hint:'The chord model runs on your device. Replay this tour any time using Quick tour at the bottom of Advanced.', icon:'layers' },
 ] as const;
 
 export default function Tutorial({ visible, onClose }: { visible: boolean; onClose: () => void }) {
@@ -38,6 +39,7 @@ export default function Tutorial({ visible, onClose }: { visible: boolean; onClo
   };
   return <Modal visible={visible} transparent animationType={reduceMotion ? 'none' : 'fade'} onRequestClose={onClose} statusBarTranslucent>
     <View style={[styles.backdrop, { paddingTop:Math.max(insets.top,20), paddingBottom:Math.max(insets.bottom,20) }]}>
+      <BlurBackdrop intensity={30} />
       <View style={styles.card} accessibilityViewIsModal>
         <View style={styles.topBar}>
           <Text style={styles.brand}>resona<Text style={{ color:colors.accent }}>.</Text><Text style={styles.lite}>  LITE</Text></Text>
@@ -84,7 +86,7 @@ function TutorialArtwork({ step, icon }: { step: number; icon: IconName }) {
 
 function createStyles(c: ThemeColors) {
   return StyleSheet.create({
-    backdrop:{ flex:1, backgroundColor:'rgba(8,25,27,0.52)', paddingHorizontal:20, justifyContent:'center', alignItems:'center' },
+    backdrop:{ flex:1, paddingHorizontal:20, justifyContent:'center', alignItems:'center' },
     card:{ width:'100%', maxWidth:420, maxHeight:'100%', backgroundColor:c.surface, borderRadius:28, borderWidth:1, borderColor:c.line, overflow:'hidden' },
     topBar:{ flexDirection:'row', alignItems:'center', justifyContent:'space-between', paddingHorizontal:24, paddingTop:12, gap:8 },
     brand:{ fontSize:23, fontWeight:'700', letterSpacing:-1, color:c.ink, fontFamily:fonts.body },

@@ -70,30 +70,32 @@ export default function RangeControl({
           {unit}
         </Text>
       </View>
-      <Slider
-        accessibilityLabel={title}
-        minimumValue={minimum}
-        maximumValue={maximum}
-        step={step}
-        value={value}
-        minimumTrackTintColor={colors.accent}
-        maximumTrackTintColor={colors.line}
-        thumbTintColor={colors.accent}
-        onValueChange={(nextValue) => {
-          setDraftValue(nextValue);
-          setIsSliding(true);
-        }}
-        onSlidingComplete={(nextValue) => {
-          setDraftValue(nextValue);
-          setIsSliding(false);
-          onChange(nextValue);
-        }}
-        style={[
-          styles.slider,
-          compact && styles.compactSlider,
-          grid && styles.gridSlider,
-        ]}
-      />
+      <View style={[styles.sliderInset, grid && styles.gridSliderInset]}>
+        <Slider
+          accessibilityLabel={title}
+          minimumValue={minimum}
+          maximumValue={maximum}
+          step={step}
+          value={value}
+          minimumTrackTintColor={colors.accent}
+          maximumTrackTintColor={colors.line}
+          thumbTintColor={colors.accent}
+          onValueChange={(nextValue) => {
+            setDraftValue(nextValue);
+            setIsSliding(true);
+          }}
+          onSlidingComplete={(nextValue) => {
+            setDraftValue(nextValue);
+            setIsSliding(false);
+            onChange(nextValue);
+          }}
+          style={[
+            styles.slider,
+            compact && styles.compactSlider,
+            grid && styles.gridSlider,
+          ]}
+        />
+      </View>
     </View>
   );
 }
@@ -172,17 +174,16 @@ const styles = StyleSheet.create({
   compactValue: {
     fontSize: 13,
   },
+  sliderInset:{ marginHorizontal:8 },
+  gridSliderInset:{ marginHorizontal:4 },
   slider: {
     height: 44,
-    marginHorizontal: -8,
   },
   compactSlider: {
     height: 34,
-    marginHorizontal: -6,
   },
   gridSlider: {
     width: '100%',
     height: 30,
-    marginHorizontal: -4,
   },
 });

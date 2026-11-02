@@ -12,6 +12,7 @@ export default function HomeRoute() {
       audioError={player.audioError}
       onTogglePlayback={player.toggleSession}
       onSelectMode={player.chooseMode}
+      onLayerVolumeChange={player.updateSetting}
       onMasterVolumeChange={(value) => player.updateSetting('masterVolume', value)}
     />
   );

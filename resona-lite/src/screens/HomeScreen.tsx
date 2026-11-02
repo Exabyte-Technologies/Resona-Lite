@@ -13,6 +13,8 @@ import AudioErrorNotice from '../components/AudioErrorNotice';
 import Icon, { type IconName } from '../components/Icon';
 import RangeControl from '../components/RangeControl';
 import Panel from '../components/Panel';
+import LayerBalanceDialog from '../components/LayerBalanceDialog';
+import type { LayerVolumeKey } from '../components/LayerBalanceControls';
 import { fonts, spacing, useThemeColors, type ThemeColors } from '../theme';
 import { MotionPressable, SelectionWash, useMotionValue, useReducedMotion } from '../motion';
 
@@ -24,6 +26,7 @@ type Props = {
   onTogglePlayback: () => void;
   onSelectMode: (mode: Mode) => void;
   onMasterVolumeChange: (value: number) => void;
+  onLayerVolumeChange: (key: LayerVolumeKey, value: number) => void;
 };
 
 const modeIcons: Record<Mode, IconName> = {
@@ -41,10 +44,12 @@ export default function HomeScreen({
   onTogglePlayback,
   onSelectMode,
   onMasterVolumeChange,
+  onLayerVolumeChange,
 }: Props) {
   const colors = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [playFocused, setPlayFocused] = useState(false);
+  const [balanceVisible, setBalanceVisible] = useState(false);
   const [focusedMode, setFocusedMode] = useState<Mode | null>(null);
 
   return (
@@ -119,6 +124,10 @@ export default function HomeScreen({
               onChange={onMasterVolumeChange}
             />
           </View>
+          <MotionPressable accessibilityRole="button" accessibilityLabel="Open layer balance" onPress={() => setBalanceVisible(true)} style={styles.balanceButton}>
+            <Icon name="balance" size={17} />
+            <Text style={styles.balanceButtonText}>Layer balance</Text>
+          </MotionPressable>
         </View>
 
         <Panel title="Choose a mood" icon="meditation" compact>
@@ -164,6 +173,7 @@ export default function HomeScreen({
           </View>
         </Panel>
       </ScrollView>
+      <LayerBalanceDialog visible={balanceVisible} onClose={() => setBalanceVisible(false)} settings={settings} onChange={onLayerVolumeChange} />
     </>
   );
 }
@@ -258,6 +268,8 @@ function createStyles(colors: ThemeColors) {
       borderColor: colors.selectedIconSurface,
       backgroundColor: colors.surfaceSelected,
     },
+    balanceButton:{ alignSelf:'flex-end', minHeight:44, marginTop:12, paddingHorizontal:12, flexDirection:'row', alignItems:'center', justifyContent:'center', gap:8, backgroundColor:colors.surface, borderRadius:12, borderWidth:StyleSheet.hairlineWidth, borderColor:colors.selectedBorder },
+    balanceButtonText:{ fontFamily:fonts.body, fontSize:13, fontWeight:'600', color:colors.accent },
     playerHeading: {
       flexDirection: 'row',
       alignItems: 'flex-start',

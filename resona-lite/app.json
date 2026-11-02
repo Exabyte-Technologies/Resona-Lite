@@ -5,11 +5,14 @@
     "scheme": "resona-lite",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/resona-icon.png",
+    "icon": "./assets/resona-icon-padded.png",
     "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "com.resona.lite",
-      "supportsTablet": false
+      "supportsTablet": false,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.resona.lite",
@@ -20,12 +23,15 @@
       ],
       "adaptiveIcon": {
         "backgroundColor": "#f4f7f3",
-        "foregroundImage": "./assets/resona-icon.png"
+        "foregroundImage": "./assets/resona-icon-padded.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "web": {
-      "favicon": "./assets/resona-icon.png"
+      "favicon": "./assets/resona-icon-padded.png"
     },
     "plugins": [
       "expo-router",
@@ -37,6 +43,16 @@
           "enableBackgroundPlayback": false
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "5dad582a-0757-44cd-845d-e42f6ac3cc3f"
+      }
+    }
   }
 }
