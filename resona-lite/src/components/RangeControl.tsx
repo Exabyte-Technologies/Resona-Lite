@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Slider from '@react-native-community/slider';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors, fonts, spacing } from '../theme';
+import { fonts, spacing, useThemeColors } from '../theme';
 
 type Props = {
   title: string;
@@ -12,6 +12,7 @@ type Props = {
   step?: number;
   unit?: string;
   compact?: boolean;
+  grid?: boolean;
   onChange: (value: number) => void;
 };
 
@@ -24,24 +25,47 @@ export default function RangeControl({
   step = 1,
   unit = '',
   compact = false,
+  grid = false,
   onChange,
 }: Props) {
+  const colors = useThemeColors();
   const [draftValue, setDraftValue] = useState(value);
   const [isSliding, setIsSliding] = useState(false);
   const displayedValue = isSliding ? draftValue : value;
 
   return (
-    <View style={[styles.control, compact && styles.compactControl]}>
-      <View style={styles.heading}>
+    <View style={[
+      styles.control,
+      compact && styles.compactControl,
+      grid && styles.gridControl,
+    ]}>
+      <View style={[styles.heading, grid && styles.gridHeading]}>
         <View style={styles.copy}>
-          <Text style={[styles.title, compact && styles.compactTitle]}>{title}</Text>
+          <Text style={[
+            styles.title,
+            { color: colors.ink },
+            compact && styles.compactTitle,
+            grid && styles.gridTitle,
+          ]}>
+            {title}
+          </Text>
           {description ? (
-            <Text style={[styles.description, compact && styles.compactDescription]}>
+            <Text style={[
+              styles.description,
+              { color: colors.dim },
+              compact && styles.compactDescription,
+              grid && styles.gridDescription,
+            ]}>
               {description}
             </Text>
           ) : null}
         </View>
-        <Text style={[styles.value, compact && styles.compactValue]}>
+        <Text style={[
+          styles.value,
+          { color: colors.accent },
+          compact && styles.compactValue,
+          grid && styles.gridValue,
+        ]}>
           {formatValue(displayedValue)}
           {unit}
         </Text>
@@ -64,7 +88,11 @@ export default function RangeControl({
           setIsSliding(false);
           onChange(nextValue);
         }}
-        style={[styles.slider, compact && styles.compactSlider]}
+        style={[
+          styles.slider,
+          compact && styles.compactSlider,
+          grid && styles.gridSlider,
+        ]}
       />
     </View>
   );
@@ -81,30 +109,47 @@ const styles = StyleSheet.create({
   compactControl: {
     gap: spacing.xxs,
   },
+  gridControl: {
+    width: '100%',
+    gap: 0,
+  },
   heading: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: spacing.md,
   },
+  gridHeading: {
+    minHeight: 34,
+    flexDirection: 'column-reverse',
+    alignItems: 'stretch',
+    justifyContent: 'flex-end',
+    gap: 2,
+  },
   copy: {
     flex: 1,
     gap: 3,
   },
   title: {
-    color: colors.ink,
     fontFamily: fonts.body,
     fontSize: 15,
     fontWeight: '600',
+  },
+  gridTitle: {
+    fontSize: 11,
+    lineHeight: 13,
   },
   compactTitle: {
     fontSize: 14,
   },
   description: {
-    color: colors.dim,
     fontFamily: fonts.body,
     fontSize: 13,
     lineHeight: 18,
+  },
+  gridDescription: {
+    fontSize: 9,
+    lineHeight: 11,
   },
   compactDescription: {
     fontSize: 12,
@@ -112,11 +157,17 @@ const styles = StyleSheet.create({
   },
   value: {
     minWidth: 52,
-    color: colors.accent,
     fontFamily: fonts.body,
     fontSize: 14,
     fontVariant: ['tabular-nums'],
     textAlign: 'right',
+  },
+  gridValue: {
+    alignSelf: 'flex-start',
+    minWidth: 0,
+    fontSize: 10,
+    fontWeight: '600',
+    textAlign: 'left',
   },
   compactValue: {
     fontSize: 13,
@@ -128,5 +179,10 @@ const styles = StyleSheet.create({
   compactSlider: {
     height: 34,
     marginHorizontal: -6,
+  },
+  gridSlider: {
+    width: '100%',
+    height: 30,
+    marginHorizontal: -4,
   },
 });

@@ -10,6 +10,7 @@ ready to start—there are no accounts to create and no setup to get in the way.
 - **Advanced:** Fine-tune binaural beats, create a layered ambient sound, choose a noise texture,
   and balance the volume of each layer.
 - **Listen your way:** Headphones are recommended, especially for binaural beats.
+- **Your theme:** The app follows your phone's light or dark appearance.
 
 Sound is created on your device. Resona Lite does not need an account or microphone access.
 

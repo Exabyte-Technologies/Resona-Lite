@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   AccessibilityInfo,
   Animated,
@@ -11,9 +11,10 @@ import {
 import type { Mode, SoundSettings } from '../model';
 import { MODES } from '../model';
 import AudioErrorNotice from '../components/AudioErrorNotice';
+import Icon, { type IconName } from '../components/Icon';
 import RangeControl from '../components/RangeControl';
 import Panel from '../components/Panel';
-import { colors, fonts, spacing } from '../theme';
+import { fonts, spacing, useThemeColors, type ThemeColors } from '../theme';
 
 type Props = {
   settings: SoundSettings;
@@ -25,6 +26,13 @@ type Props = {
   onMasterVolumeChange: (value: number) => void;
 };
 
+const modeIcons: Record<Mode, IconName> = {
+  sleep: 'sleep',
+  meditation: 'meditation',
+  focus: 'focus',
+  awake: 'awake',
+};
+
 export default function HomeScreen({
   settings,
   isPlaying,
@@ -34,6 +42,8 @@ export default function HomeScreen({
   onSelectMode,
   onMasterVolumeChange,
 }: Props) {
+  const colors = useThemeColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [playFocused, setPlayFocused] = useState(false);
   const [focusedMode, setFocusedMode] = useState<Mode | null>(null);
 
@@ -46,6 +56,10 @@ export default function HomeScreen({
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.intro}>
+          <View style={styles.eyebrow}>
+            <View style={styles.eyebrowMark} />
+            <Text style={styles.eyebrowText}>A little space to reset</Text>
+          </View>
           <Text style={styles.title}>Make room for quiet</Text>
           <Text style={styles.description}>
             Choose a listening mode and shape the sound around you.
@@ -56,11 +70,17 @@ export default function HomeScreen({
           <View style={styles.playerHeading}>
             <View style={styles.playerCopy}>
               <Text style={styles.playerTitle}>Your soundscape</Text>
-              <Text style={styles.playerHint}>Headphones recommended</Text>
+              <View style={styles.headphones}>
+                <Icon name="headphones" color={colors.muted} size={14} />
+                <Text style={styles.playerHint}>Headphones recommended</Text>
+              </View>
             </View>
-            <Text accessibilityLiveRegion="polite" style={styles.playState}>
-              {isPlaying ? 'Playing' : audioReady ? 'Ready' : 'Tuning'}
-            </Text>
+            <View style={[styles.statusPill, isPlaying && styles.statusPillPlaying]}>
+              <View style={[styles.statusDot, isPlaying && styles.statusDotPlaying]} />
+              <Text accessibilityLiveRegion="polite" style={styles.playState}>
+                {isPlaying ? 'Playing' : audioReady ? 'Ready' : 'Tuning'}
+              </Text>
+            </View>
           </View>
 
           <View style={styles.listeningArea}>
@@ -101,7 +121,7 @@ export default function HomeScreen({
           </View>
         </View>
 
-        <Panel title="Choose a mood" compact>
+        <Panel title="Choose a mood" icon="meditation" compact>
           <Text style={styles.modeNote}>
             Each mode tunes your binaural beat and ambient layers. Fine-tune everything in Advanced.
           </Text>
@@ -123,10 +143,20 @@ export default function HomeScreen({
                     pressed && styles.modeButtonPressed,
                   ]}
                 >
-                  <Text style={[styles.modeName, selected && styles.modeNameSelected]}>
-                    {mode.title}
-                  </Text>
-                  <Text style={styles.modeDescription}>{mode.description}</Text>
+                  <View style={[styles.modeIcon, selected && styles.modeIconSelected]}>
+                    <Icon
+                      name={modeIcons[mode.id]}
+                      color={selected ? colors.accent : colors.dim}
+                      size={18}
+                    />
+                  </View>
+                  <View style={styles.modeCopy}>
+                    <Text style={[styles.modeName, selected && styles.modeNameSelected]}>
+                      {mode.title}
+                    </Text>
+                    <Text style={styles.modeDescription}>{mode.description}</Text>
+                  </View>
+                  {selected ? <View style={styles.selectedMark} /> : null}
                 </Pressable>
               );
             })}
@@ -138,6 +168,8 @@ export default function HomeScreen({
 }
 
 function WaterRings({ isPlaying }: { isPlaying: boolean }) {
+  const colors = useThemeColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [progress] = useState(() => new Animated.Value(0));
   const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
 
@@ -192,24 +224,19 @@ function WaterRings({ isPlaying }: { isPlaying: boolean }) {
   return (
     <View pointerEvents="none" style={styles.rings}>
       <Animated.View
-        style={[
-          styles.ring,
-          styles.outerRing,
-          animate ? firstWave : styles.stillRing,
-        ]}
+        style={[styles.ring, styles.outerRing, animate ? firstWave : styles.stillRing]}
       />
       <Animated.View
-        style={[
-          styles.ring,
-          styles.innerRing,
-          animate ? secondWave : styles.stillRing,
-        ]}
+        style={[styles.ring, styles.innerRing, animate ? secondWave : styles.stillRing]}
       />
     </View>
   );
 }
 
 function PlayGlyph({ isPlaying }: { isPlaying: boolean }) {
+  const colors = useThemeColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return isPlaying ? (
     <View style={styles.pauseGlyph}>
       <View style={styles.pauseBar} />
@@ -220,192 +247,262 @@ function PlayGlyph({ isPlaying }: { isPlaying: boolean }) {
   );
 }
 
-const styles = StyleSheet.create({
-  content: {
-    paddingHorizontal: spacing.page,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xl,
-    gap: spacing.md,
-  },
-  intro: {
-    gap: spacing.xs,
-    paddingBottom: spacing.xs,
-  },
-  title: {
-    color: colors.ink,
-    fontFamily: fonts.display,
-    fontSize: 31,
-    fontWeight: '500',
-    lineHeight: 37,
-    letterSpacing: -0.5,
-  },
-  description: {
-    color: colors.muted,
-    fontFamily: fonts.body,
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  player: {
-    padding: spacing.md,
-    borderRadius: 24,
-    backgroundColor: colors.surfaceSelected,
-  },
-  playerHeading: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
-  playerCopy: {
-    gap: 3,
-  },
-  playerTitle: {
-    color: colors.ink,
-    fontFamily: fonts.display,
-    fontSize: 19,
-    fontWeight: '600',
-  },
-  playerHint: {
-    color: colors.muted,
-    fontFamily: fonts.body,
-    fontSize: 13,
-  },
-  playState: {
-    color: colors.accent,
-    fontFamily: fonts.body,
-    fontSize: 13,
-    fontWeight: '600',
-    paddingTop: 2,
-  },
-  listeningArea: {
-    height: 190,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rings: {
-    position: 'absolute',
-    width: 184,
-    height: 184,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ring: {
-    position: 'absolute',
-    borderRadius: 100,
-    borderWidth: 1,
-    borderColor: colors.ripple,
-  },
-  outerRing: {
-    width: 154,
-    height: 154,
-  },
-  innerRing: {
-    width: 122,
-    height: 122,
-  },
-  stillRing: {
-    opacity: 0.35,
-    transform: [{ scale: 1 }],
-  },
-  playButton: {
-    width: 76,
-    height: 76,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 40,
-    backgroundColor: colors.accent,
-  },
-  playButtonActive: {
-    backgroundColor: colors.accentHighlight,
-  },
-  playButtonDisabled: {
-    opacity: 0.55,
-  },
-  focused: {
-    borderWidth: 2,
-    borderColor: colors.ink,
-  },
-  playButtonPressed: {
-    transform: [{ scale: 0.95 }],
-  },
-  playGlyph: {
-    width: 0,
-    height: 0,
-    marginLeft: 5,
-    borderTopWidth: 10,
-    borderBottomWidth: 10,
-    borderLeftWidth: 16,
-    borderTopColor: 'transparent',
-    borderBottomColor: 'transparent',
-    borderLeftColor: colors.accentInk,
-  },
-  pauseGlyph: {
-    height: 20,
-    flexDirection: 'row',
-    gap: 5,
-  },
-  pauseBar: {
-    width: 5,
-    borderRadius: 2,
-    backgroundColor: colors.accentInk,
-  },
-  playPrompt: {
-    alignSelf: 'center',
-    color: colors.ink,
-    fontFamily: fonts.body,
-    fontSize: 14,
-    fontWeight: '600',
-    marginTop: -spacing.xs,
-    marginBottom: spacing.sm,
-  },
-  volumeArea: {
-    paddingTop: spacing.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.line,
-  },
-  modeNote: {
-    color: colors.muted,
-    fontFamily: fonts.body,
-    fontSize: 13,
-    lineHeight: 19,
-  },
-  modeGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-    paddingTop: spacing.xxs,
-  },
-  modeButton: {
-    width: '48%',
-    minHeight: 62,
-    justifyContent: 'center',
-    gap: 3,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.line,
-    backgroundColor: colors.surfaceSubtle,
-  },
-  modeButtonSelected: {
-    borderColor: colors.selectedBorder,
-    backgroundColor: colors.surfaceSelected,
-  },
-  modeButtonPressed: {
-    opacity: 0.82,
-  },
-  modeName: {
-    color: colors.ink,
-    fontFamily: fonts.body,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  modeNameSelected: {
-    color: colors.accent,
-  },
-  modeDescription: {
-    color: colors.dim,
-    fontFamily: fonts.body,
-    fontSize: 12,
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    content: {
+      paddingHorizontal: spacing.page,
+      paddingTop: spacing.md,
+      paddingBottom: spacing.xl,
+      gap: spacing.md,
+    },
+    intro: {
+      gap: spacing.xs,
+      paddingBottom: spacing.xs,
+    },
+    eyebrow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+      marginBottom: spacing.xxs,
+    },
+    eyebrowMark: {
+      width: 7,
+      height: 7,
+      borderRadius: 4,
+      backgroundColor: colors.accent,
+    },
+    eyebrowText: {
+      color: colors.accent,
+      fontFamily: fonts.body,
+      fontSize: 12,
+      fontWeight: '600',
+    },
+    title: {
+      color: colors.ink,
+      fontFamily: fonts.display,
+      fontSize: 31,
+      fontWeight: '500',
+      lineHeight: 37,
+      letterSpacing: -0.5,
+    },
+    description: {
+      color: colors.muted,
+      fontFamily: fonts.body,
+      fontSize: 15,
+      lineHeight: 22,
+    },
+    player: {
+      padding: spacing.md,
+      borderRadius: 24,
+      backgroundColor: colors.surfaceSelected,
+    },
+    playerHeading: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+      gap: spacing.sm,
+    },
+    playerCopy: {
+      gap: 5,
+    },
+    playerTitle: {
+      color: colors.ink,
+      fontFamily: fonts.display,
+      fontSize: 19,
+      fontWeight: '600',
+    },
+    headphones: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    playerHint: {
+      color: colors.muted,
+      fontFamily: fonts.body,
+      fontSize: 12,
+    },
+    statusPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: 9,
+      paddingVertical: 6,
+      borderRadius: 20,
+      backgroundColor: colors.surface,
+    },
+    statusPillPlaying: {
+      backgroundColor: colors.selectedIconSurface,
+    },
+    statusDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: colors.dim,
+    },
+    statusDotPlaying: {
+      backgroundColor: colors.accent,
+    },
+    playState: {
+      color: colors.muted,
+      fontFamily: fonts.body,
+      fontSize: 11,
+      fontWeight: '600',
+    },
+    listeningArea: {
+      height: 190,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    rings: {
+      position: 'absolute',
+      width: 184,
+      height: 184,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    ring: {
+      position: 'absolute',
+      borderRadius: 100,
+      borderWidth: 1,
+      borderColor: colors.ripple,
+    },
+    outerRing: {
+      width: 154,
+      height: 154,
+    },
+    innerRing: {
+      width: 122,
+      height: 122,
+    },
+    stillRing: {
+      opacity: 0.35,
+      transform: [{ scale: 1 }],
+    },
+    playButton: {
+      width: 76,
+      height: 76,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: 40,
+      backgroundColor: colors.accent,
+    },
+    playButtonActive: {
+      backgroundColor: colors.accentHighlight,
+    },
+    playButtonDisabled: {
+      opacity: 0.55,
+    },
+    focused: {
+      borderWidth: 2,
+      borderColor: colors.ink,
+    },
+    playButtonPressed: {
+      transform: [{ scale: 0.95 }],
+    },
+    playGlyph: {
+      width: 0,
+      height: 0,
+      marginLeft: 5,
+      borderTopWidth: 10,
+      borderBottomWidth: 10,
+      borderLeftWidth: 16,
+      borderTopColor: 'transparent',
+      borderBottomColor: 'transparent',
+      borderLeftColor: colors.accentInk,
+    },
+    pauseGlyph: {
+      height: 20,
+      flexDirection: 'row',
+      gap: 5,
+    },
+    pauseBar: {
+      width: 5,
+      borderRadius: 2,
+      backgroundColor: colors.accentInk,
+    },
+    playPrompt: {
+      alignSelf: 'center',
+      color: colors.ink,
+      fontFamily: fonts.body,
+      fontSize: 14,
+      fontWeight: '600',
+      marginTop: -spacing.xs,
+      marginBottom: spacing.sm,
+    },
+    volumeArea: {
+      paddingTop: spacing.sm,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.line,
+    },
+    modeNote: {
+      color: colors.muted,
+      fontFamily: fonts.body,
+      fontSize: 13,
+      lineHeight: 19,
+    },
+    modeGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.xs,
+      paddingTop: spacing.xxs,
+    },
+    modeButton: {
+      width: '48%',
+      minHeight: 62,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+      paddingHorizontal: spacing.xs,
+      paddingVertical: spacing.xs,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: colors.line,
+      backgroundColor: colors.surfaceSubtle,
+    },
+    modeButtonSelected: {
+      borderColor: colors.selectedBorder,
+      backgroundColor: colors.surfaceSelected,
+    },
+    modeButtonPressed: {
+      opacity: 0.82,
+    },
+    modeIcon: {
+      width: 34,
+      height: 34,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: 12,
+      backgroundColor: colors.iconSurface,
+    },
+    modeIconSelected: {
+      backgroundColor: colors.selectedIconSurface,
+    },
+    modeCopy: {
+      flex: 1,
+      gap: 2,
+    },
+    modeName: {
+      color: colors.ink,
+      fontFamily: fonts.body,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    modeNameSelected: {
+      color: colors.accent,
+    },
+    modeDescription: {
+      color: colors.dim,
+      fontFamily: fonts.body,
+      fontSize: 11,
+    },
+    selectedMark: {
+      position: 'absolute',
+      top: 7,
+      right: 7,
+      width: 5,
+      height: 5,
+      borderRadius: 3,
+      backgroundColor: colors.accent,
+    },
+  });
+}

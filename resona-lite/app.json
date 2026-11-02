@@ -6,7 +6,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/resona-icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "com.resona.lite",
       "supportsTablet": false
@@ -19,7 +19,7 @@
         "android.permission.WRITE_EXTERNAL_STORAGE"
       ],
       "adaptiveIcon": {
-        "backgroundColor": "#faf9f5",
+        "backgroundColor": "#f4f7f3",
         "foregroundImage": "./assets/resona-icon.png"
       },
       "predictiveBackGestureEnabled": false

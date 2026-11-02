@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import AudioErrorNotice from '../components/AudioErrorNotice';
+import Icon, { type IconName } from '../components/Icon';
 import Panel from '../components/Panel';
 import RangeControl from '../components/RangeControl';
 import {
@@ -9,7 +10,7 @@ import {
   type NoiseType,
   type SoundSettings,
 } from '../model';
-import { colors, fonts, spacing } from '../theme';
+import { fonts, spacing, useThemeColors, type ThemeColors } from '../theme';
 
 type SettingKey =
   | 'beatHz'
@@ -37,6 +38,15 @@ type Props = {
   onToggleNoise: () => void;
 };
 
+const noiseIcons: Record<NoiseType, IconName> = {
+  white: 'noise',
+  pink: 'waves',
+  brown: 'layers',
+  rain: 'waves',
+  ocean: 'waves',
+  forest: 'awake',
+};
+
 export default function AdvancedScreen({
   settings,
   binauralPlaying,
@@ -49,6 +59,8 @@ export default function AdvancedScreen({
   onToggleAmbient,
   onToggleNoise,
 }: Props) {
+  const colors = useThemeColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [focusedBand, setFocusedBand] = useState<number | null>(null);
 
   return (
@@ -64,7 +76,7 @@ export default function AdvancedScreen({
           <Text style={styles.description}>Rhythm, texture, tone and balance.</Text>
         </View>
 
-        <Panel title="Binaural rhythm" compact>
+        <Panel title="Binaural rhythm" icon="frequency" compact>
           <Text style={styles.sectionNote}>
             Choose a frequency difference to set the pace.
           </Text>
@@ -101,6 +113,7 @@ export default function AdvancedScreen({
             })}
           </View>
           <PlaybackControl
+            icon="frequency"
             status={binauralPlaying ? 'Binaural beats playing' : 'Binaural beats ready'}
             label={binauralPlaying ? 'Pause binaural' : 'Play binaural'}
             isPlaying={binauralPlaying}
@@ -109,68 +122,87 @@ export default function AdvancedScreen({
           />
         </Panel>
 
-        <Panel title="Ambient layers" compact>
+        <Panel title="Ambient layers" icon="waves" compact>
           <Text style={styles.sectionNote}>
             Blend a steady drone with pads, texture, melody and space.
           </Text>
-          <View style={styles.controlList}>
-            <RangeControl
-              compact
-              title="Drone frequency"
-              description="Base root for ambient layers and binaural tones"
-              value={settings.droneFrequency}
-              minimum={40}
-              maximum={400}
-              unit=" Hz"
-              onChange={(value) => onSettingChange('droneFrequency', value)}
-            />
-            <RangeControl
-              compact
-              title="Drone"
-              description="Low, grounding foundation"
-              value={settings.drone}
-              minimum={0}
-              maximum={100}
-              onChange={(value) => onSettingChange('drone', value)}
-            />
-            <RangeControl
-              compact
-              title="Lush pads"
-              description="Warm harmonic bloom"
-              value={settings.pads}
-              minimum={0}
-              maximum={100}
-              onChange={(value) => onSettingChange('pads', value)}
-            />
-            <RangeControl
-              compact
-              title="Textures & foley"
-              description="Air, grain and organic detail"
-              value={settings.textures}
-              minimum={0}
-              maximum={100}
-              onChange={(value) => onSettingChange('textures', value)}
-            />
-            <RangeControl
-              compact
-              title="Minimal melodic elements"
-              description="Sparse, glimmering tones"
-              value={settings.melody}
-              minimum={0}
-              maximum={100}
-              onChange={(value) => onSettingChange('melody', value)}
-            />
-            <RangeControl
-              compact
-              title="Spatial effects"
-              description="Width, drift and echo"
-              value={settings.spatial}
-              minimum={0}
-              maximum={100}
-              onChange={(value) => onSettingChange('spatial', value)}
-            />
+          <View style={styles.mixerGrid}>
+            <View style={styles.mixerTile}>
+              <RangeControl
+                compact
+                grid
+                title="Root frequency"
+                description="Ambient and binaural base"
+                value={settings.droneFrequency}
+                minimum={40}
+                maximum={400}
+                unit=" Hz"
+                onChange={(value) => onSettingChange('droneFrequency', value)}
+              />
+            </View>
+            <View style={styles.mixerTile}>
+              <RangeControl
+                compact
+                grid
+                title="Drone"
+                description="Low foundation"
+                value={settings.drone}
+                minimum={0}
+                maximum={100}
+                onChange={(value) => onSettingChange('drone', value)}
+              />
+            </View>
+            <View style={styles.mixerTile}>
+              <RangeControl
+                compact
+                grid
+                title="Lush pads"
+                description="Harmonic bloom"
+                value={settings.pads}
+                minimum={0}
+                maximum={100}
+                onChange={(value) => onSettingChange('pads', value)}
+              />
+            </View>
+            <View style={styles.mixerTile}>
+              <RangeControl
+                compact
+                grid
+                title="Texture"
+                description="Air and organic detail"
+                value={settings.textures}
+                minimum={0}
+                maximum={100}
+                onChange={(value) => onSettingChange('textures', value)}
+              />
+            </View>
+            <View style={styles.mixerTile}>
+              <RangeControl
+                compact
+                grid
+                title="Melody"
+                description="Sparse glimmers"
+                value={settings.melody}
+                minimum={0}
+                maximum={100}
+                onChange={(value) => onSettingChange('melody', value)}
+              />
+            </View>
+            <View style={styles.mixerTile}>
+              <RangeControl
+                compact
+                grid
+                title="Spatial"
+                description="Width and echo"
+                value={settings.spatial}
+                minimum={0}
+                maximum={100}
+                onChange={(value) => onSettingChange('spatial', value)}
+              />
+            </View>
           </View>
           <PlaybackControl
+            icon="waves"
             status={ambientPlaying ? 'Soundscape playing' : 'Soundscape ready'}
             label={ambientPlaying ? 'Pause ambient' : 'Generate ambient'}
             isPlaying={ambientPlaying}
@@ -179,7 +211,7 @@ export default function AdvancedScreen({
           />
         </Panel>
 
-        <Panel title="Noise colour" compact>
+        <Panel title="Noise colour" icon="noise" compact>
           <Text style={styles.sectionNote}>
             Pick a steady noise or a natural texture.
           </Text>
@@ -188,12 +220,14 @@ export default function AdvancedScreen({
               <NoiseChoice
                 key={noise.id}
                 noise={noise}
+                icon={noiseIcons[noise.id]}
                 selected={settings.noise === noise.id}
                 onPress={() => onSettingChange('noise', noise.id)}
               />
             ))}
           </View>
           <PlaybackControl
+            icon={noiseIcons[settings.noise]}
             status={`${capitalize(settings.noise)} noise ${noisePlaying ? 'playing' : 'ready'}`}
             label={noisePlaying ? 'Pause noise' : 'Play noise'}
             isPlaying={noisePlaying}
@@ -202,7 +236,7 @@ export default function AdvancedScreen({
           />
         </Panel>
 
-        <Panel title="Layer balance" compact>
+        <Panel title="Layer balance" icon="balance" compact>
           <Text style={styles.sectionNote}>
             Set each layer while it plays alone or alongside the others.
           </Text>
@@ -242,28 +276,35 @@ export default function AdvancedScreen({
 }
 
 function PlaybackControl({
+  icon,
   status,
   label,
   isPlaying,
   audioReady,
   onPress,
 }: {
+  icon: IconName;
   status: string;
   label: string;
   isPlaying: boolean;
   audioReady: boolean;
   onPress: () => void;
 }) {
+  const colors = useThemeColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [focused, setFocused] = useState(false);
 
   return (
     <View style={styles.playback}>
-      <Text
-        accessibilityLiveRegion="polite"
-        style={[styles.playbackStatus, isPlaying && styles.playbackStatusActive]}
-      >
-        {status}
-      </Text>
+      <View style={styles.playbackInfo}>
+        <Icon name={icon} color={isPlaying ? colors.accent : colors.dim} size={16} />
+        <Text
+          accessibilityLiveRegion="polite"
+          style={[styles.playbackStatus, isPlaying && styles.playbackStatusActive]}
+        >
+          {status}
+        </Text>
+      </View>
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ disabled: !audioReady }}
@@ -279,6 +320,7 @@ function PlaybackControl({
           pressed && audioReady && styles.playButtonPressed,
         ]}
       >
+        <Icon name={isPlaying ? 'waves' : icon} color={colors.accentInk} size={15} />
         <Text style={[styles.playButtonText, isPlaying && styles.playButtonTextActive]}>
           {audioReady ? label : 'Tuning'}
         </Text>
@@ -289,13 +331,17 @@ function PlaybackControl({
 
 function NoiseChoice({
   noise,
+  icon,
   selected,
   onPress,
 }: {
   noise: (typeof NOISE_TYPES)[number];
+  icon: IconName;
   selected: boolean;
   onPress: () => void;
 }) {
+  const colors = useThemeColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [focused, setFocused] = useState(false);
 
   return (
@@ -312,10 +358,15 @@ function NoiseChoice({
         pressed && styles.noiseChoicePressed,
       ]}
     >
-      <Text style={[styles.noiseName, selected && styles.selectedText]}>
-        {capitalize(noise.id)}
-      </Text>
-      <Text style={styles.noiseDescription}>{noise.description.replace(' · ', ', ')}</Text>
+      <View style={styles.noiseIcon}>
+        <Icon name={icon} color={selected ? colors.accent : colors.dim} size={16} />
+      </View>
+      <View style={styles.noiseCopy}>
+        <Text style={[styles.noiseName, selected && styles.selectedText]}>
+          {capitalize(noise.id)}
+        </Text>
+        <Text style={styles.noiseDescription}>{noise.description.replace(' · ', ', ')}</Text>
+      </View>
     </Pressable>
   );
 }
@@ -324,174 +375,214 @@ function capitalize(noise: NoiseType) {
   return noise.charAt(0).toUpperCase() + noise.slice(1);
 }
 
-const styles = StyleSheet.create({
-  content: {
-    paddingHorizontal: spacing.page,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.xl,
-    gap: spacing.sm,
-  },
-  intro: {
-    gap: spacing.xxs,
-    paddingBottom: spacing.xxs,
-  },
-  title: {
-    color: colors.ink,
-    fontFamily: fonts.display,
-    fontSize: 27,
-    fontWeight: '500',
-    lineHeight: 33,
-    letterSpacing: -0.4,
-  },
-  description: {
-    color: colors.muted,
-    fontFamily: fonts.body,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  sectionNote: {
-    color: colors.muted,
-    fontFamily: fonts.body,
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  bandGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-  },
-  bandButton: {
-    width: '48%',
-    minHeight: 52,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: 13,
-    borderWidth: 1,
-    borderColor: colors.line,
-    backgroundColor: colors.surfaceSubtle,
-  },
-  gammaBand: {
-    width: '100%',
-  },
-  bandButtonSelected: {
-    borderColor: colors.selectedBorder,
-    backgroundColor: colors.surfaceSelected,
-  },
-  bandButtonPressed: {
-    opacity: 0.78,
-  },
-  focused: {
-    borderWidth: 2,
-    borderColor: colors.accent,
-  },
-  bandName: {
-    color: colors.ink,
-    fontFamily: fonts.body,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  bandInfo: {
-    flex: 1,
-    gap: 1,
-  },
-  selectedText: {
-    color: colors.accent,
-  },
-  bandDescription: {
-    color: colors.dim,
-    fontFamily: fonts.body,
-    fontSize: 11,
-  },
-  bandFrequency: {
-    color: colors.muted,
-    fontFamily: fonts.body,
-    fontSize: 12,
-    fontVariant: ['tabular-nums'],
-  },
-  playback: {
-    minHeight: 44,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.xs,
-    paddingTop: spacing.xxs,
-  },
-  playbackStatus: {
-    flex: 1,
-    color: colors.muted,
-    fontFamily: fonts.body,
-    fontSize: 12,
-  },
-  playbackStatusActive: {
-    color: colors.accent,
-  },
-  playButton: {
-    minWidth: 118,
-    minHeight: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing.sm,
-    borderRadius: 12,
-    backgroundColor: colors.accent,
-  },
-  playButtonActive: {
-    backgroundColor: colors.accentHighlight,
-  },
-  playButtonDisabled: {
-    opacity: 0.55,
-  },
-  playButtonPressed: {
-    transform: [{ scale: 0.98 }],
-  },
-  playButtonText: {
-    color: colors.accentInk,
-    fontFamily: fonts.body,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  playButtonTextActive: {
-    color: colors.accentInk,
-  },
-  noiseGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-  },
-  noiseChoice: {
-    width: '48%',
-    minHeight: 52,
-    justifyContent: 'center',
-    gap: 2,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.line,
-    backgroundColor: colors.surfaceSubtle,
-  },
-  noiseChoiceSelected: {
-    borderColor: colors.selectedBorder,
-    backgroundColor: colors.surfaceSelected,
-  },
-  noiseChoicePressed: {
-    opacity: 0.78,
-  },
-  noiseName: {
-    color: colors.ink,
-    fontFamily: fonts.body,
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  noiseDescription: {
-    color: colors.dim,
-    fontFamily: fonts.body,
-    fontSize: 10,
-  },
-  controlList: {
-    gap: spacing.xs,
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    content: {
+      paddingHorizontal: spacing.page,
+      paddingTop: spacing.sm,
+      paddingBottom: spacing.xl,
+      gap: spacing.sm,
+    },
+    intro: {
+      gap: spacing.xxs,
+      paddingBottom: spacing.xxs,
+    },
+    title: {
+      color: colors.ink,
+      fontFamily: fonts.display,
+      fontSize: 27,
+      fontWeight: '500',
+      lineHeight: 33,
+      letterSpacing: -0.4,
+    },
+    description: {
+      color: colors.muted,
+      fontFamily: fonts.body,
+      fontSize: 14,
+      lineHeight: 20,
+    },
+    sectionNote: {
+      color: colors.muted,
+      fontFamily: fonts.body,
+      fontSize: 12,
+      lineHeight: 16,
+    },
+    bandGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.xs,
+    },
+    bandButton: {
+      width: '48%',
+      minHeight: 52,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: spacing.xs,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.xs,
+      borderRadius: 13,
+      borderWidth: 1,
+      borderColor: colors.line,
+      backgroundColor: colors.surfaceSubtle,
+    },
+    gammaBand: {
+      width: '100%',
+    },
+    bandButtonSelected: {
+      borderColor: colors.selectedBorder,
+      backgroundColor: colors.surfaceSelected,
+    },
+    bandButtonPressed: {
+      opacity: 0.78,
+    },
+    focused: {
+      borderWidth: 2,
+      borderColor: colors.accent,
+    },
+    bandName: {
+      color: colors.ink,
+      fontFamily: fonts.body,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    bandInfo: {
+      flex: 1,
+      gap: 1,
+    },
+    selectedText: {
+      color: colors.accent,
+    },
+    bandDescription: {
+      color: colors.dim,
+      fontFamily: fonts.body,
+      fontSize: 11,
+    },
+    bandFrequency: {
+      color: colors.muted,
+      fontFamily: fonts.body,
+      fontSize: 12,
+      fontVariant: ['tabular-nums'],
+    },
+    mixerGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+      rowGap: spacing.xs,
+    },
+    mixerTile: {
+      width: '31.6%',
+      minHeight: 96,
+      justifyContent: 'center',
+      paddingHorizontal: spacing.xs,
+      paddingVertical: spacing.xxs,
+      borderRadius: 12,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.line,
+      backgroundColor: colors.surfaceSubtle,
+    },
+    playback: {
+      minHeight: 44,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: spacing.xs,
+      paddingTop: spacing.xxs,
+    },
+    playbackInfo: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+    },
+    playbackStatus: {
+      flexShrink: 1,
+      color: colors.muted,
+      fontFamily: fonts.body,
+      fontSize: 12,
+    },
+    playbackStatusActive: {
+      color: colors.accent,
+    },
+    playButton: {
+      minWidth: 132,
+      minHeight: 40,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: spacing.xs,
+      paddingHorizontal: spacing.sm,
+      borderRadius: 12,
+      backgroundColor: colors.accent,
+    },
+    playButtonActive: {
+      backgroundColor: colors.accentHighlight,
+    },
+    playButtonDisabled: {
+      opacity: 0.55,
+    },
+    playButtonPressed: {
+      transform: [{ scale: 0.98 }],
+    },
+    playButtonText: {
+      color: colors.accentInk,
+      fontFamily: fonts.body,
+      fontSize: 12,
+      fontWeight: '700',
+    },
+    playButtonTextActive: {
+      color: colors.accentInk,
+    },
+    noiseGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.xs,
+    },
+    noiseChoice: {
+      width: '48%',
+      minHeight: 56,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.xs,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.line,
+      backgroundColor: colors.surfaceSubtle,
+    },
+    noiseChoiceSelected: {
+      borderColor: colors.selectedBorder,
+      backgroundColor: colors.surfaceSelected,
+    },
+    noiseChoicePressed: {
+      opacity: 0.78,
+    },
+    noiseIcon: {
+      width: 28,
+      height: 28,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: 10,
+      backgroundColor: colors.iconSurface,
+    },
+    noiseCopy: {
+      flex: 1,
+      gap: 2,
+    },
+    noiseName: {
+      color: colors.ink,
+      fontFamily: fonts.body,
+      fontSize: 13,
+      fontWeight: '600',
+    },
+    noiseDescription: {
+      color: colors.dim,
+      fontFamily: fonts.body,
+      fontSize: 10,
+    },
+    controlList: {
+      gap: spacing.xs,
+    },
+  });
+}
