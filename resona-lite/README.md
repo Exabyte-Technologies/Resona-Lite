@@ -1,44 +1,77 @@
 # Resona Lite
 
-Resona's music engine in an Expo mobile app, without accounts or the chat/voice
-agent. Everything needed for playback and chord inference is packaged on-device.
+**A little space to reset.**
 
-A short first-launch tour introduces moods, playback, Advanced and chords. Finish
-or skip it once; use **Quick tour** in the header to replay it. This preference
-is stored only on the device. Transitions respect the system Reduce Motion setting.
+Resona Lite brings the sound of [Resona](https://github.com/Exabyte-Technologies/Resona)
+to your phone. It creates an evolving mix of ambient music, gentle tones and natural
+textures for moments when you want to rest, meditate, focus or take a quiet break.
 
-Home keeps the simple Sleep, Meditation, Focus and Awake transport. Advanced has:
+Open the app, choose a mood and press play. There is no account to create, and the
+music is made on your device.
 
-- The original six-layer ambient synth and full effects chain: EQ, saturation,
-  stereo chorus, compression, convolution reverb, filtered feedback delay, limiter.
-- Restore, Melancholy and Deep meditation atmospheres; C/D/E♭/F/G/A tonal centres;
-  manual root tuning; warmth, movement, space, texture, shimmer and output controls.
-- Difference or individual-ear binaural tuning, band presets and support tone mix.
-- Original offline chord model, seeds, progression length, creativity, top choices,
-  predictable mode, play/pause/stop/replay, and continuous A/B/C set preparation.
-- 2–120 seconds per chord and independent 0–4 second ambient/binaural transitions.
-- White, pink, brown, rain, ocean and forest noise; per-track and master volume.
+## A look inside
 
-The original engine and model assets are vendored unchanged with provenance and
-GPL license in `src/engine/vendor`. The old eight-second WAV loop approximations
-have been removed. Controls update the active graph instead of replacing files.
-The engine lives in one persistent, local WebView, shared between both screens.
-Web preview uses the same document in an iframe. There are no server requests.
-The offline chord model is retained intentionally; there is no conversational AI.
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/home.png" width="280" alt="Resona Lite Home screen with a play button, master volume and listening moods" /></td>
+    <td align="center"><img src="docs/screenshots/chords.png" width="280" alt="Resona Lite chord controls with starting chords, timing and continuous sets" /></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Start with a little quiet</strong><br />Your music, mood and volume in one place.</td>
+    <td align="center"><strong>Let the harmony unfold</strong><br />Create a chord sequence and let it keep evolving.</td>
+  </tr>
+</table>
 
-## Run
+*Screenshots show the phone layout in the web preview. Appearance may vary slightly by device.*
+
+## Find your mood
+
+Choose **Sleep**, **Meditation**, **Focus** or **Awake** to set the feel of your
+soundscape. Start or pause with one tap, and adjust the overall volume without
+leaving Home.
+
+A short tour welcomes you on first launch. You can skip it, go back through the
+steps, or open **Quick tour** in the header whenever you want a reminder.
+
+## Make it your own
+
+Visit **Advanced** when you feel like exploring. Blend soft musical layers, choose
+a warmer or more spacious atmosphere, and add white, pink or brown noise—or textures
+inspired by rain, the ocean and a forest. Each sound track has its own playback and
+volume controls.
+
+You can also choose a tonal centre—the note your music is built around—or create a
+chord progression. Add starting chords if you have something in mind, or let Resona
+Lite choose. **Continuous sets** keeps new harmony ready as you listen.
+
+The app follows your phone’s light or dark appearance, and its gentle transitions
+respect your system’s Reduce Motion setting.
+
+Headphones are recommended, especially for binaural beats, which send slightly
+different tones to each ear. **Playback currently works while the app is in the
+foreground; background playback is not yet supported.**
+
+---
+
+## Technical details
+
+Resona Lite is an Expo SDK 58 / React Native app for iOS and Android, with an
+optional web preview. It bundles Resona’s original Web Audio engine and offline
+chord model. Audio runs in a persistent local WebView on mobile and an iframe on
+web. Playback and chord generation use local assets; no account, microphone or
+chat/voice agent is required. Tutorial completion is stored on the device.
+
+### Run locally
 
 ```sh
 npm ci
 npm start
 ```
 
-The WebView native dependency requires a fresh app binary if you were previously
-using a custom development build. Rebuild with `npm run ios` / `npm run android`,
-or use an Expo Go version matching SDK 58. Audio is foreground-only; background
-playback is not implemented. Headphones are recommended for binaural beats.
+Use `npm run ios` or `npm run android` for a native build. Existing development
+installs need a rebuild to include the WebView dependency. Expo Go must match SDK 58.
 
-## Validate
+### Checks
 
 ```sh
 npm test
@@ -47,28 +80,20 @@ npm run lint
 npx expo export --platform web
 ```
 
-`npm test` checks pinned upstream hashes, audio graph/transport behavior, exact
-mode frequencies, harmonic retuning, transitions, individual ears, the local
-model versus original model loading, and continuous-set rotation/cancellation.
-
-An additional real browser DSP comparison is available with Playwright installed:
+Optional checks, with their dependencies installed:
 
 ```sh
+# Playwright: compare rendered audio with the original Resona source.
 RESONA_SOURCE=/path/to/Resona/resona/static/js/audio.js node scripts/verify-render.cjs
-```
 
-It renders 12 scenarios through OfflineAudioContext with the same random seed and
-compares both channels with a 1e-6 floating-point tolerance. Set `CHROME_PATH` if
-Chrome is installed elsewhere. Independent live sessions remain generative:
-random chords, textures and timing need not be identical between two runs.
-
-Tutorial interaction checks can also run without a browser when `esbuild` and
-`jsdom` are available (including via `NODE_PATH`):
-
-```sh
+# esbuild + jsdom: check the tutorial flow and saved completion.
 node scripts/verify-tutorial.cjs
 node scripts/verify-tutorial.cjs --motion
 ```
 
-These cover first-launch display, all four steps, Back, Finish, Skip, persistence
-across remounts, and restarting the tour, with and without reduced motion.
+The audio comparison uses matching random input. Separate listening sessions can
+produce different chords, textures and note timing.
+
+See the [audio parity notes](docs/audio-parity.md) for the comparison and
+verification details, and [upstream attribution](src/engine/vendor/PROVENANCE.md)
+for the original engine and model sources.
