@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "Resona Lite",
+    "slug": "resona-lite",
+    "scheme": "resona-lite",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/resona-icon.png",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "bundleIdentifier": "com.resona.lite",
+      "supportsTablet": false
+    },
+    "android": {
+      "package": "com.resona.lite",
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ],
+      "adaptiveIcon": {
+        "backgroundColor": "#111510",
+        "foregroundImage": "./assets/resona-icon.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/resona-icon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "enableBackgroundPlayback": false
+        }
+      ]
+    ]
+  }
+}
