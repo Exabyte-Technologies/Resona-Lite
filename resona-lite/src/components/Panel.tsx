@@ -5,12 +5,11 @@ import { colors, fonts, spacing } from '../theme';
 export default function Panel({
   children,
   title,
-  eyebrow,
-}: PropsWithChildren<{ title: string; eyebrow?: string }>) {
+  compact = false,
+}: PropsWithChildren<{ title: string; compact?: boolean }>) {
   return (
-    <View style={styles.panel}>
-      {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
-      <Text style={styles.title}>{title}</Text>
+    <View style={[styles.panel, compact && styles.compactPanel]}>
+      <Text style={[styles.title, compact && styles.compactTitle]}>{title}</Text>
       {children}
     </View>
   );
@@ -18,24 +17,26 @@ export default function Panel({
 
 const styles = StyleSheet.create({
   panel: {
-    padding: spacing.lg,
-    borderWidth: 1,
+    padding: spacing.md,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    borderRadius: 26,
+    borderRadius: 20,
     backgroundColor: colors.surface,
-    gap: spacing.md,
+    gap: spacing.sm,
   },
-  eyebrow: {
-    marginBottom: -spacing.sm,
-    color: colors.accent,
-    fontFamily: fonts.body,
-    fontSize: 12,
-    fontWeight: '600',
+  compactPanel: {
+    padding: spacing.sm,
+    gap: spacing.xs,
   },
   title: {
     color: colors.ink,
     fontFamily: fonts.display,
-    fontSize: 28,
-    lineHeight: 34,
+    fontSize: 19,
+    fontWeight: '600',
+    lineHeight: 24,
+  },
+  compactTitle: {
+    fontSize: 17,
+    lineHeight: 22,
   },
 });

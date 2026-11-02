@@ -11,6 +11,7 @@ type Props = {
   maximum: number;
   step?: number;
   unit?: string;
+  compact?: boolean;
   onChange: (value: number) => void;
 };
 
@@ -22,6 +23,7 @@ export default function RangeControl({
   maximum,
   step = 1,
   unit = '',
+  compact = false,
   onChange,
 }: Props) {
   const [draftValue, setDraftValue] = useState(value);
@@ -29,13 +31,17 @@ export default function RangeControl({
   const displayedValue = isSliding ? draftValue : value;
 
   return (
-    <View style={styles.control}>
+    <View style={[styles.control, compact && styles.compactControl]}>
       <View style={styles.heading}>
         <View style={styles.copy}>
-          <Text style={styles.title}>{title}</Text>
-          {description ? <Text style={styles.description}>{description}</Text> : null}
+          <Text style={[styles.title, compact && styles.compactTitle]}>{title}</Text>
+          {description ? (
+            <Text style={[styles.description, compact && styles.compactDescription]}>
+              {description}
+            </Text>
+          ) : null}
         </View>
-        <Text style={styles.value}>
+        <Text style={[styles.value, compact && styles.compactValue]}>
           {formatValue(displayedValue)}
           {unit}
         </Text>
@@ -58,7 +64,7 @@ export default function RangeControl({
           setIsSliding(false);
           onChange(nextValue);
         }}
-        style={styles.slider}
+        style={[styles.slider, compact && styles.compactSlider]}
       />
     </View>
   );
@@ -71,6 +77,9 @@ function formatValue(value: number) {
 const styles = StyleSheet.create({
   control: {
     gap: spacing.xs,
+  },
+  compactControl: {
+    gap: spacing.xxs,
   },
   heading: {
     flexDirection: 'row',
@@ -85,25 +94,39 @@ const styles = StyleSheet.create({
   title: {
     color: colors.ink,
     fontFamily: fonts.body,
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
+  },
+  compactTitle: {
+    fontSize: 14,
   },
   description: {
     color: colors.dim,
     fontFamily: fonts.body,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  compactDescription: {
     fontSize: 12,
-    lineHeight: 17,
+    lineHeight: 14,
   },
   value: {
     minWidth: 52,
     color: colors.accent,
     fontFamily: fonts.body,
-    fontSize: 13,
+    fontSize: 14,
     fontVariant: ['tabular-nums'],
     textAlign: 'right',
   },
+  compactValue: {
+    fontSize: 13,
+  },
   slider: {
-    height: 36,
+    height: 44,
     marginHorizontal: -8,
+  },
+  compactSlider: {
+    height: 34,
+    marginHorizontal: -6,
   },
 });

@@ -15,7 +15,7 @@ export default function RootLayout() {
 function AppTabs() {
   return (
     <View style={styles.container}>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <Tabs
         screenOptions={{
           headerTitle: () => (
@@ -39,7 +39,7 @@ function AppTabs() {
           options={{
             title: 'Home',
             tabBarLabel: 'Home',
-            tabBarIcon: ({ color }) => <WaveGlyph color={color} />,
+            tabBarIcon: ({ color, focused }) => <TabMarker color={color} focused={focused} />,
           }}
         />
         <Tabs.Screen
@@ -47,7 +47,7 @@ function AppTabs() {
           options={{
             title: 'Advanced',
             tabBarLabel: 'Advanced',
-            tabBarIcon: ({ color }) => <SlidersGlyph color={color} />,
+            tabBarIcon: ({ color, focused }) => <TabMarker color={color} focused={focused} />,
           }}
         />
       </Tabs>
@@ -55,30 +55,20 @@ function AppTabs() {
   );
 }
 
-function WaveGlyph({ color }: { color: ColorValue | undefined }) {
+function TabMarker({
+  color,
+  focused,
+}: {
+  color: ColorValue | undefined;
+  focused: boolean;
+}) {
   return (
-    <View style={styles.glyph}>
-      {[10, 17, 7, 13].map((height, index) => (
-        <View key={index} style={[styles.waveBar, { height, backgroundColor: color }]} />
-      ))}
-    </View>
-  );
-}
-
-function SlidersGlyph({ color }: { color: ColorValue | undefined }) {
-  return (
-    <View style={styles.glyph}>
-      {[4, 12, 8].map((top, index) => (
-        <View key={index} style={[styles.sliderLine, { top, backgroundColor: color }]}>
-          <View
-            style={[
-              styles.sliderKnob,
-              { left: index === 1 ? 10 : 4, backgroundColor: color },
-            ]}
-          />
-        </View>
-      ))}
-    </View>
+    <View
+      style={[
+        styles.tabMarker,
+        { backgroundColor: color, opacity: focused ? 1 : 0 },
+      ]}
+    />
   );
 }
 
@@ -90,48 +80,32 @@ const styles = StyleSheet.create({
   logo: {
     color: colors.ink,
     fontFamily: fonts.body,
-    fontSize: 23,
+    fontSize: 24,
     fontWeight: '700',
-    letterSpacing: -1.3,
+    letterSpacing: -1.2,
   },
   logoAccent: {
     color: colors.accent,
   },
   tabBar: {
+    height: 68,
+    paddingTop: 5,
+    paddingBottom: 5,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.line,
     backgroundColor: colors.background,
   },
   tabItem: {
-    paddingTop: 6,
+    paddingTop: 2,
   },
   tabLabel: {
     fontFamily: fonts.body,
-    fontSize: 11,
+    fontSize: 13,
+    fontWeight: '500',
   },
-  glyph: {
-    width: 22,
-    height: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    gap: 2,
-  },
-  waveBar: {
-    width: 2,
-    borderRadius: 2,
-  },
-  sliderLine: {
-    position: 'absolute',
-    left: 1,
+  tabMarker: {
     width: 20,
-    height: 1,
-  },
-  sliderKnob: {
-    position: 'absolute',
-    top: -2,
-    width: 5,
-    height: 5,
-    borderRadius: 3,
+    height: 3,
+    borderRadius: 2,
   },
 });

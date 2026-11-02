@@ -1,14 +1,19 @@
 # Resona Lite
 
-The mobile app is an Expo/React Native version of the original Resona player. It opens directly on Home and has only Home and Advanced tabs. The existing Resona player pages and styling are under `../Resona/`; this app keeps its implementation and copied app icon inside this folder.
+Resona Lite is a simple listening companion for finding a little quiet. Open the app and you are
+ready to start—there are no accounts to create and no setup to get in the way.
 
-The app has no sign-in, registration, account controls, AI, or microphone access. Its binaural, ambient, and noise tracks are synthesized locally on the device.
+## What you can do
 
-## Run
+- **Home:** Pick Sleep, Meditation, Focus, or Awake, adjust the overall volume, and start or pause
+  your soundscape.
+- **Advanced:** Fine-tune binaural beats, create a layered ambient sound, choose a noise texture,
+  and balance the volume of each layer.
+- **Listen your way:** Headphones are recommended, especially for binaural beats.
 
-```sh
-npm install
-npm start
-```
+Sound is created on your device. Resona Lite does not need an account or microphone access.
 
-Build and launch with `npx expo run:ios` or `npx expo run:android` (requires the matching native toolchain). `npm run typecheck` checks the TypeScript sources.
+## A note on sound
+
+Listening preferences are personal. Keep the volume comfortable and take a break whenever you need
+one.

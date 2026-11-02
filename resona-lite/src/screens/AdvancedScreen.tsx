@@ -60,15 +60,13 @@ export default function AdvancedScreen({
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.intro}>
-          <Text style={styles.title}>Shape your soundscape</Text>
-          <Text style={styles.description}>
-            Tune focused binaural rhythms or build a living ambient composition from layered sound.
-          </Text>
+          <Text style={styles.title}>Fine-tune your sound</Text>
+          <Text style={styles.description}>Rhythm, texture, tone and balance.</Text>
         </View>
 
-        <Panel title="Binaural beats" eyebrow="Binaural engine">
-          <Text style={styles.cardIntro}>
-            Choose a neural rhythm and let a precise frequency difference settle around you.
+        <Panel title="Binaural rhythm" compact>
+          <Text style={styles.sectionNote}>
+            Choose a frequency difference to set the pace.
           </Text>
           <View style={styles.bandGrid}>
             {BEAT_BANDS.map((band) => {
@@ -89,18 +87,21 @@ export default function AdvancedScreen({
                     pressed && styles.bandButtonPressed,
                   ]}
                 >
-                  <Text style={[styles.bandName, selected && styles.selectedText]}>
-                    {band.name}
-                  </Text>
-                  <Text style={styles.bandDescription}>
-                    {band.hz} Hz · {band.purpose}
+                  <View style={styles.bandInfo}>
+                    <Text style={[styles.bandName, selected && styles.selectedText]}>
+                      {band.name}
+                    </Text>
+                    <Text style={styles.bandDescription}>{band.purpose}</Text>
+                  </View>
+                  <Text style={[styles.bandFrequency, selected && styles.selectedText]}>
+                    {band.hz} Hz
                   </Text>
                 </Pressable>
               );
             })}
           </View>
           <PlaybackControl
-            status={`${binauralPlaying ? 'Playing' : 'Ready'} · ${selectedBandName(settings.beatHz)} ${settings.beatHz} Hz`}
+            status={binauralPlaying ? 'Binaural beats playing' : 'Binaural beats ready'}
             label={binauralPlaying ? 'Pause binaural' : 'Play binaural'}
             isPlaying={binauralPlaying}
             audioReady={audioReady}
@@ -108,13 +109,13 @@ export default function AdvancedScreen({
           />
         </Panel>
 
-        <Panel title="Ambient music generator" eyebrow="Procedural soundscape">
-          <Text style={styles.cardIntro}>
-            Set the base tonal anchor. Pads and melody follow the drone while textures add a soft,
-            spacious layer.
+        <Panel title="Ambient layers" compact>
+          <Text style={styles.sectionNote}>
+            Blend a steady drone with pads, texture, melody and space.
           </Text>
           <View style={styles.controlList}>
             <RangeControl
+              compact
               title="Drone frequency"
               description="Base root for ambient layers and binaural tones"
               value={settings.droneFrequency}
@@ -124,6 +125,7 @@ export default function AdvancedScreen({
               onChange={(value) => onSettingChange('droneFrequency', value)}
             />
             <RangeControl
+              compact
               title="Drone"
               description="Low, grounding foundation"
               value={settings.drone}
@@ -132,6 +134,7 @@ export default function AdvancedScreen({
               onChange={(value) => onSettingChange('drone', value)}
             />
             <RangeControl
+              compact
               title="Lush pads"
               description="Warm harmonic bloom"
               value={settings.pads}
@@ -140,6 +143,7 @@ export default function AdvancedScreen({
               onChange={(value) => onSettingChange('pads', value)}
             />
             <RangeControl
+              compact
               title="Textures & foley"
               description="Air, grain and organic detail"
               value={settings.textures}
@@ -148,6 +152,7 @@ export default function AdvancedScreen({
               onChange={(value) => onSettingChange('textures', value)}
             />
             <RangeControl
+              compact
               title="Minimal melodic elements"
               description="Sparse, glimmering tones"
               value={settings.melody}
@@ -156,6 +161,7 @@ export default function AdvancedScreen({
               onChange={(value) => onSettingChange('melody', value)}
             />
             <RangeControl
+              compact
               title="Spatial effects"
               description="Width, drift and echo"
               value={settings.spatial}
@@ -173,9 +179,9 @@ export default function AdvancedScreen({
           />
         </Panel>
 
-        <Panel title="Noise generator" eyebrow="Continuous texture">
-          <Text style={styles.cardIntro}>
-            Choose a steady noise colour or an environmental texture to soften distractions.
+        <Panel title="Noise colour" compact>
+          <Text style={styles.sectionNote}>
+            Pick a steady noise or a natural texture.
           </Text>
           <View style={styles.noiseGrid}>
             {NOISE_TYPES.map((noise) => (
@@ -188,7 +194,7 @@ export default function AdvancedScreen({
             ))}
           </View>
           <PlaybackControl
-            status={`${noisePlaying ? 'Playing' : 'Ready'} · ${capitalize(settings.noise)} noise`}
+            status={`${capitalize(settings.noise)} noise ${noisePlaying ? 'playing' : 'ready'}`}
             label={noisePlaying ? 'Pause noise' : 'Play noise'}
             isPlaying={noisePlaying}
             audioReady={audioReady}
@@ -196,12 +202,13 @@ export default function AdvancedScreen({
           />
         </Panel>
 
-        <Panel title="Master volume" eyebrow="Output mixer">
-          <Text style={styles.cardIntro}>
-            Balance the two generators and noise while they play together or on their own.
+        <Panel title="Layer balance" compact>
+          <Text style={styles.sectionNote}>
+            Set each layer while it plays alone or alongside the others.
           </Text>
           <View style={styles.controlList}>
             <RangeControl
+              compact
               title="Binaural beats"
               description="Overall binaural output"
               value={settings.binauralVolume}
@@ -210,6 +217,7 @@ export default function AdvancedScreen({
               onChange={(value) => onSettingChange('binauralVolume', value)}
             />
             <RangeControl
+              compact
               title="Ambient music"
               description="Overall ambient output"
               value={settings.ambientVolume}
@@ -218,6 +226,7 @@ export default function AdvancedScreen({
               onChange={(value) => onSettingChange('ambientVolume', value)}
             />
             <RangeControl
+              compact
               title="Noise generator"
               description="Overall noise output"
               value={settings.noiseVolume}
@@ -249,7 +258,12 @@ function PlaybackControl({
 
   return (
     <View style={styles.playback}>
-      <Text style={styles.playbackStatus}>{status}</Text>
+      <Text
+        accessibilityLiveRegion="polite"
+        style={[styles.playbackStatus, isPlaying && styles.playbackStatusActive]}
+      >
+        {status}
+      </Text>
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ disabled: !audioReady }}
@@ -301,13 +315,9 @@ function NoiseChoice({
       <Text style={[styles.noiseName, selected && styles.selectedText]}>
         {capitalize(noise.id)}
       </Text>
-      <Text style={styles.noiseDescription}>{noise.description}</Text>
+      <Text style={styles.noiseDescription}>{noise.description.replace(' · ', ', ')}</Text>
     </Pressable>
   );
-}
-
-function selectedBandName(beat: number) {
-  return BEAT_BANDS.find((band) => band.hz === beat)?.name ?? 'Binaural';
 }
 
 function capitalize(noise: NoiseType) {
@@ -317,60 +327,62 @@ function capitalize(noise: NoiseType) {
 const styles = StyleSheet.create({
   content: {
     paddingHorizontal: spacing.page,
-    paddingTop: spacing.lg,
+    paddingTop: spacing.sm,
     paddingBottom: spacing.xl,
-    gap: spacing.lg,
+    gap: spacing.sm,
   },
   intro: {
-    gap: spacing.xs,
-    marginBottom: spacing.xs,
+    gap: spacing.xxs,
+    paddingBottom: spacing.xxs,
   },
   title: {
     color: colors.ink,
     fontFamily: fonts.display,
-    fontSize: 40,
-    lineHeight: 46,
-    letterSpacing: -1,
+    fontSize: 27,
+    fontWeight: '500',
+    lineHeight: 33,
+    letterSpacing: -0.4,
   },
   description: {
     color: colors.muted,
     fontFamily: fonts.body,
-    fontSize: 15,
-    lineHeight: 23,
+    fontSize: 14,
+    lineHeight: 20,
   },
-  cardIntro: {
-    marginTop: -spacing.sm,
+  sectionNote: {
     color: colors.muted,
     fontFamily: fonts.body,
-    fontSize: 13,
-    lineHeight: 20,
+    fontSize: 12,
+    lineHeight: 16,
   },
   bandGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   bandButton: {
-    flexGrow: 1,
-    flexBasis: '46%',
-    minHeight: 72,
-    justifyContent: 'center',
-    gap: 5,
-    padding: spacing.md,
-    borderRadius: 16,
+    width: '48%',
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: 13,
     borderWidth: 1,
     borderColor: colors.line,
     backgroundColor: colors.surfaceSubtle,
   },
   gammaBand: {
-    flexBasis: '100%',
+    width: '100%',
   },
   bandButtonSelected: {
     borderColor: colors.selectedBorder,
     backgroundColor: colors.surfaceSelected,
   },
   bandButtonPressed: {
-    opacity: 0.75,
+    opacity: 0.78,
   },
   focused: {
     borderWidth: 2,
@@ -379,8 +391,12 @@ const styles = StyleSheet.create({
   bandName: {
     color: colors.ink,
     fontFamily: fonts.body,
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
+  },
+  bandInfo: {
+    flex: 1,
+    gap: 1,
   },
   selectedText: {
     color: colors.accent,
@@ -388,30 +404,42 @@ const styles = StyleSheet.create({
   bandDescription: {
     color: colors.dim,
     fontFamily: fonts.body,
-    fontSize: 12,
+    fontSize: 11,
   },
-  playback: {
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingTop: spacing.xs,
-  },
-  playbackStatus: {
+  bandFrequency: {
     color: colors.muted,
     fontFamily: fonts.body,
     fontSize: 12,
-    textAlign: 'center',
+    fontVariant: ['tabular-nums'],
+  },
+  playback: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.xs,
+    paddingTop: spacing.xxs,
+  },
+  playbackStatus: {
+    flex: 1,
+    color: colors.muted,
+    fontFamily: fonts.body,
+    fontSize: 12,
+  },
+  playbackStatusActive: {
+    color: colors.accent,
   },
   playButton: {
-    minWidth: 156,
-    minHeight: 50,
+    minWidth: 118,
+    minHeight: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spacing.lg,
-    borderRadius: 26,
+    paddingHorizontal: spacing.sm,
+    borderRadius: 12,
     backgroundColor: colors.accent,
   },
   playButtonActive: {
-    backgroundColor: colors.ink,
+    backgroundColor: colors.accentHighlight,
   },
   playButtonDisabled: {
     opacity: 0.55,
@@ -422,25 +450,25 @@ const styles = StyleSheet.create({
   playButtonText: {
     color: colors.accentInk,
     fontFamily: fonts.body,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
   },
   playButtonTextActive: {
-    color: colors.background,
+    color: colors.accentInk,
   },
   noiseGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   noiseChoice: {
-    flexGrow: 1,
-    flexBasis: '46%',
-    minHeight: 68,
+    width: '48%',
+    minHeight: 52,
     justifyContent: 'center',
-    gap: 4,
-    padding: spacing.sm,
-    borderRadius: 14,
+    gap: 2,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.line,
     backgroundColor: colors.surfaceSubtle,
@@ -450,21 +478,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceSelected,
   },
   noiseChoicePressed: {
-    opacity: 0.75,
+    opacity: 0.78,
   },
   noiseName: {
     color: colors.ink,
     fontFamily: fonts.body,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
   },
   noiseDescription: {
     color: colors.dim,
     fontFamily: fonts.body,
-    fontSize: 11,
+    fontSize: 10,
   },
   controlList: {
-    gap: spacing.md,
-    paddingTop: spacing.xs,
+    gap: spacing.xs,
   },
 });

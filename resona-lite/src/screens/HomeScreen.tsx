@@ -1,5 +1,13 @@
-import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import {
+  AccessibilityInfo,
+  Animated,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import type { Mode, SoundSettings } from '../model';
 import { MODES } from '../model';
 import AudioErrorNotice from '../components/AudioErrorNotice';
@@ -38,35 +46,48 @@ export default function HomeScreen({
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.intro}>
-          <Text style={styles.title}>A calmer way to listen</Text>
+          <Text style={styles.title}>Make room for quiet</Text>
           <Text style={styles.description}>
-            Choose a mode, press play, and let the sound adapt around you.
+            Choose a listening mode and shape the sound around you.
           </Text>
         </View>
 
-        <Panel title="Your soundscape" eyebrow="Now playing">
-          <Text style={styles.headphones}>Headphones recommended</Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityState={{ disabled: !audioReady }}
-            accessibilityLabel={isPlaying ? 'Pause your soundscape' : 'Play your soundscape'}
-            disabled={!audioReady}
-            onPress={onTogglePlayback}
-            onFocus={() => setPlayFocused(true)}
-            onBlur={() => setPlayFocused(false)}
-            style={({ pressed }) => [
-              styles.playButton,
-              isPlaying && styles.playButtonActive,
-              !audioReady && styles.playButtonDisabled,
-              playFocused && styles.focused,
-              pressed && audioReady && styles.playButtonPressed,
-            ]}
-          >
-            <PlayGlyph isPlaying={isPlaying} />
-            <Text style={styles.playLabel}>
-              {audioReady ? (isPlaying ? 'Pause' : 'Play') : 'Tuning'}
+        <View style={styles.player}>
+          <View style={styles.playerHeading}>
+            <View style={styles.playerCopy}>
+              <Text style={styles.playerTitle}>Your soundscape</Text>
+              <Text style={styles.playerHint}>Headphones recommended</Text>
+            </View>
+            <Text accessibilityLiveRegion="polite" style={styles.playState}>
+              {isPlaying ? 'Playing' : audioReady ? 'Ready' : 'Tuning'}
             </Text>
-          </Pressable>
+          </View>
+
+          <View style={styles.listeningArea}>
+            <WaterRings isPlaying={isPlaying} />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ disabled: !audioReady }}
+              accessibilityLabel={isPlaying ? 'Pause your soundscape' : 'Play your soundscape'}
+              disabled={!audioReady}
+              onPress={onTogglePlayback}
+              onFocus={() => setPlayFocused(true)}
+              onBlur={() => setPlayFocused(false)}
+              style={({ pressed }) => [
+                styles.playButton,
+                isPlaying && styles.playButtonActive,
+                !audioReady && styles.playButtonDisabled,
+                playFocused && styles.focused,
+                pressed && audioReady && styles.playButtonPressed,
+              ]}
+            >
+              <PlayGlyph isPlaying={isPlaying} />
+            </Pressable>
+          </View>
+          <Text style={styles.playPrompt}>
+            {audioReady ? (isPlaying ? 'Pause soundscape' : 'Start listening') : 'Preparing sound'}
+          </Text>
+
           <View style={styles.volumeArea}>
             <RangeControl
               title="Master volume"
@@ -78,9 +99,12 @@ export default function HomeScreen({
               onChange={onMasterVolumeChange}
             />
           </View>
-        </Panel>
+        </View>
 
-        <Panel title="How do you want to feel?" eyebrow="Choose a mode">
+        <Panel title="Choose a mood" compact>
+          <Text style={styles.modeNote}>
+            Each mode tunes your binaural beat and ambient layers. Fine-tune everything in Advanced.
+          </Text>
           <View style={styles.modeGrid}>
             {MODES.map((mode) => {
               const selected = settings.mode === mode.id;
@@ -99,25 +123,89 @@ export default function HomeScreen({
                     pressed && styles.modeButtonPressed,
                   ]}
                 >
-                  <View style={[styles.modeIcon, selected && styles.modeIconSelected]}>
-                    <Text style={[styles.modeSymbol, selected && styles.modeSymbolSelected]}>
-                      {mode.symbol}
-                    </Text>
-                  </View>
-                  <View style={styles.modeCopy}>
-                    <Text style={styles.modeName}>{mode.title}</Text>
-                    <Text style={styles.modeDescription}>{mode.description}</Text>
-                  </View>
+                  <Text style={[styles.modeName, selected && styles.modeNameSelected]}>
+                    {mode.title}
+                  </Text>
+                  <Text style={styles.modeDescription}>{mode.description}</Text>
                 </Pressable>
               );
             })}
           </View>
-          <Text style={styles.modeNote}>
-            Each mode tunes your binaural beat and ambient layers. Fine-tune everything in Advanced.
-          </Text>
         </Panel>
       </ScrollView>
     </>
+  );
+}
+
+function WaterRings({ isPlaying }: { isPlaying: boolean }) {
+  const [progress] = useState(() => new Animated.Value(0));
+  const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const subscription = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduceMotion);
+    AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
+      if (active) setReduceMotion(enabled);
+    });
+    return () => {
+      active = false;
+      subscription.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    progress.stopAnimation();
+    progress.setValue(0);
+    if (!isPlaying || reduceMotion !== false) return;
+
+    const animation = Animated.loop(
+      Animated.timing(progress, {
+        toValue: 1,
+        duration: 3200,
+        useNativeDriver: true,
+      }),
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [isPlaying, progress, reduceMotion]);
+
+  const firstWave = {
+    opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [0.38, 0] }),
+    transform: [{ scale: progress.interpolate({ inputRange: [0, 1], outputRange: [0.72, 1.28] }) }],
+  };
+  const secondWave = {
+    opacity: progress.interpolate({
+      inputRange: [0, 0.4, 1],
+      outputRange: [0, 0.3, 0],
+    }),
+    transform: [
+      {
+        scale: progress.interpolate({
+          inputRange: [0, 0.4, 1],
+          outputRange: [0.76, 0.86, 1.3],
+        }),
+      },
+    ],
+  };
+  const animate = isPlaying && reduceMotion === false;
+
+  return (
+    <View pointerEvents="none" style={styles.rings}>
+      <Animated.View
+        style={[
+          styles.ring,
+          styles.outerRing,
+          animate ? firstWave : styles.stillRing,
+        ]}
+      />
+      <Animated.View
+        style={[
+          styles.ring,
+          styles.innerRing,
+          animate ? secondWave : styles.stillRing,
+        ]}
+      />
+    </View>
   );
 }
 
@@ -135,56 +223,110 @@ function PlayGlyph({ isPlaying }: { isPlaying: boolean }) {
 const styles = StyleSheet.create({
   content: {
     paddingHorizontal: spacing.page,
-    paddingTop: spacing.lg,
+    paddingTop: spacing.md,
     paddingBottom: spacing.xl,
-    gap: spacing.lg,
+    gap: spacing.md,
   },
   intro: {
     gap: spacing.xs,
-    marginBottom: spacing.xs,
+    paddingBottom: spacing.xs,
   },
   title: {
     color: colors.ink,
     fontFamily: fonts.display,
-    fontSize: 42,
-    lineHeight: 48,
-    letterSpacing: -1.1,
+    fontSize: 31,
+    fontWeight: '500',
+    lineHeight: 37,
+    letterSpacing: -0.5,
   },
   description: {
-    maxWidth: 360,
     color: colors.muted,
     fontFamily: fonts.body,
     fontSize: 15,
-    lineHeight: 23,
+    lineHeight: 22,
   },
-  headphones: {
-    marginTop: -spacing.sm,
-    color: colors.dim,
+  player: {
+    padding: spacing.md,
+    borderRadius: 24,
+    backgroundColor: colors.surfaceSelected,
+  },
+  playerHeading: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  playerCopy: {
+    gap: 3,
+  },
+  playerTitle: {
+    color: colors.ink,
+    fontFamily: fonts.display,
+    fontSize: 19,
+    fontWeight: '600',
+  },
+  playerHint: {
+    color: colors.muted,
     fontFamily: fonts.body,
-    fontSize: 12,
+    fontSize: 13,
   },
-  playButton: {
-    width: 128,
-    height: 128,
-    alignSelf: 'center',
+  playState: {
+    color: colors.accent,
+    fontFamily: fonts.body,
+    fontSize: 13,
+    fontWeight: '600',
+    paddingTop: 2,
+  },
+  listeningArea: {
+    height: 190,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.sm,
-    borderRadius: 64,
+  },
+  rings: {
+    position: 'absolute',
+    width: 184,
+    height: 184,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ring: {
+    position: 'absolute',
+    borderRadius: 100,
+    borderWidth: 1,
+    borderColor: colors.ripple,
+  },
+  outerRing: {
+    width: 154,
+    height: 154,
+  },
+  innerRing: {
+    width: 122,
+    height: 122,
+  },
+  stillRing: {
+    opacity: 0.35,
+    transform: [{ scale: 1 }],
+  },
+  playButton: {
+    width: 76,
+    height: 76,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 40,
     backgroundColor: colors.accent,
   },
   playButtonActive: {
-    backgroundColor: colors.ink,
+    backgroundColor: colors.accentHighlight,
   },
   playButtonDisabled: {
     opacity: 0.55,
   },
   focused: {
     borderWidth: 2,
-    borderColor: colors.accent,
+    borderColor: colors.ink,
   },
   playButtonPressed: {
-    transform: [{ scale: 0.97 }],
+    transform: [{ scale: 0.95 }],
   },
   playGlyph: {
     width: 0,
@@ -207,32 +349,40 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     backgroundColor: colors.accentInk,
   },
-  playLabel: {
-    color: colors.accentInk,
+  playPrompt: {
+    alignSelf: 'center',
+    color: colors.ink,
     fontFamily: fonts.body,
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: -spacing.xs,
+    marginBottom: spacing.sm,
   },
   volumeArea: {
-    padding: spacing.md,
-    borderRadius: 18,
-    backgroundColor: colors.surfaceSubtle,
+    paddingTop: spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.line,
+  },
+  modeNote: {
+    color: colors.muted,
+    fontFamily: fonts.body,
+    fontSize: 13,
+    lineHeight: 19,
   },
   modeGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.sm,
+    gap: spacing.xs,
+    paddingTop: spacing.xxs,
   },
   modeButton: {
     width: '48%',
-    minHeight: 74,
-    flexGrow: 1,
-    flexBasis: '46%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    padding: spacing.sm,
-    borderRadius: 16,
+    minHeight: 62,
+    justifyContent: 'center',
+    gap: 3,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.line,
     backgroundColor: colors.surfaceSubtle,
@@ -242,45 +392,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceSelected,
   },
   modeButtonPressed: {
-    opacity: 0.76,
-  },
-  modeIcon: {
-    width: 34,
-    height: 34,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 18,
-    backgroundColor: colors.iconSurface,
-  },
-  modeIconSelected: {
-    backgroundColor: colors.selectedIconSurface,
-  },
-  modeSymbol: {
-    color: colors.muted,
-    fontSize: 17,
-  },
-  modeSymbolSelected: {
-    color: colors.accent,
-  },
-  modeCopy: {
-    flexShrink: 1,
-    gap: 3,
+    opacity: 0.82,
   },
   modeName: {
     color: colors.ink,
     fontFamily: fonts.body,
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: '600',
+  },
+  modeNameSelected: {
+    color: colors.accent,
   },
   modeDescription: {
     color: colors.dim,
     fontFamily: fonts.body,
-    fontSize: 11,
-  },
-  modeNote: {
-    color: colors.dim,
-    fontFamily: fonts.body,
     fontSize: 12,
-    lineHeight: 18,
   },
 });

@@ -1,0 +1,31 @@
+[
+ {
+  "mode": "redesign",
+  "depth": "full",
+  "scope": "app",
+  "theme": "Ribbon",
+  "prompt": "Fully redesign Resona Lite as a light, water-inspired soundscape app; preserve all playback and audio controls while compacting Advanced settings.",
+  "axes": [
+   "Dawn palette",
+   "playing-state water rings",
+   "compact grouped controls"
+  ],
+  "hero": "Home playback as a large listening instrument with ripples only while audio plays.",
+  "nav": "Logo-only header and native Home and Advanced tabs preserved.",
+  "footer": "Native tab bar; no extra footer.",
+  "imagery": "Native animated water rings; no photographs.",
+  "photos": [],
+  "entry": "Home screen, with the play control central to the listening surface.",
+  "fingerprint": "ribbon-dawn-water-rings-compact-audio-controls",
+  "sections": [
+   "Home playback",
+   "Mood selection",
+   "Binaural rhythm",
+   "Ambient layers",
+   "Noise colour",
+   "Layer balance"
+  ],
+  "signature": "Water rings around the play control while listening.",
+  "date": "2026-11-02"
+ }
+]
