@@ -5,6 +5,24 @@ export type Track = 'binaural' | 'ambient' | 'noise';
 
 export type SoundSettings = {
   mode: Mode;
+  atmosphere: 'restore' | 'melancholy' | 'deep';
+  tonalSource: 'manual' | 'generated';
+  manualRootMidi: number;
+  binauralMode: 'difference' | 'individual';
+  leftFrequency: number;
+  rightFrequency: number;
+  warmth: number;
+  movement: number;
+  space: number;
+  texture: number;
+  shimmer: number;
+  output: number;
+  chordTransition: number;
+  binauralChordTransition: number;
+  pad: number;
+  flute: number;
+  strings: number;
+  bells: number;
   masterVolume: number;
   beatHz: number;
   droneFrequency: number;
@@ -23,32 +41,24 @@ export const DEFAULT_SETTINGS: SoundSettings = {
   mode: 'meditation',
   masterVolume: 70,
   beatHz: 6,
-  droneFrequency: 200,
-  drone: 48,
-  pads: 64,
-  textures: 32,
-  melody: 24,
-  spatial: 46,
+  droneFrequency: 440 * 2 ** ((53 - 69) / 12),
+  atmosphere: 'deep', tonalSource: 'manual', manualRootMidi: 53,
+  binauralMode: 'difference',
+  leftFrequency: 440 * 2 ** ((53 - 69) / 12) - 3,
+  rightFrequency: 440 * 2 ** ((53 - 69) / 12) + 3,
+  warmth: 80, movement: 25, space: 82, texture: 20, shimmer: 21, output: 58,
+  chordTransition: 0, binauralChordTransition: 0,
+  pad: 72, flute: 38, strings: 51, bells: 24,
+  drone: 58,
+  pads: 68,
+  textures: 30,
+  melody: 18,
+  spatial: 58,
   noise: 'pink',
   binauralVolume: 50,
   ambientVolume: 50,
   noiseVolume: 50,
 };
-
-const modeRoots = {
-  sleep: 220,
-  meditation: 174.61,
-  focus: 220,
-  awake: 130.81,
-} as const;
-
-export const MODE_PRESETS: Record<Mode, Pick<SoundSettings, 'mode' | 'beatHz' | 'droneFrequency'>> =
-  {
-    sleep: { mode: 'sleep', beatHz: 2, droneFrequency: modeRoots.sleep },
-    meditation: { mode: 'meditation', beatHz: 6, droneFrequency: modeRoots.meditation },
-    focus: { mode: 'focus', beatHz: 10, droneFrequency: modeRoots.focus },
-    awake: { mode: 'awake', beatHz: 18, droneFrequency: modeRoots.awake },
-  };
 
 export const MODES: readonly {
   id: Mode;

@@ -1,9 +1,11 @@
+import { MotionPressable, SelectionWash } from '../motion';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import AudioErrorNotice from '../components/AudioErrorNotice';
 import Icon, { type IconName } from '../components/Icon';
 import Panel from '../components/Panel';
 import RangeControl from '../components/RangeControl';
+import { BinauralControls, CompositionControls } from '../components/CompositionControls';
 import {
   BEAT_BANDS,
   NOISE_TYPES,
@@ -84,7 +86,7 @@ export default function AdvancedScreen({
             {BEAT_BANDS.map((band) => {
               const selected = settings.beatHz === band.hz;
               return (
-                <Pressable
+                <MotionPressable
                   key={band.hz}
                   accessibilityRole="button"
                   accessibilityState={{ selected }}
@@ -99,6 +101,7 @@ export default function AdvancedScreen({
                     pressed && styles.bandButtonPressed,
                   ]}
                 >
+                  <SelectionWash selected={selected} color={colors.surfaceSelected} radius={14} />
                   <View style={styles.bandInfo}>
                     <Text style={[styles.bandName, selected && styles.selectedText]}>
                       {band.name}
@@ -108,7 +111,7 @@ export default function AdvancedScreen({
                   <Text style={[styles.bandFrequency, selected && styles.selectedText]}>
                     {band.hz} Hz
                   </Text>
-                </Pressable>
+                </MotionPressable>
               );
             })}
           </View>
@@ -121,6 +124,9 @@ export default function AdvancedScreen({
             onPress={onToggleBinaural}
           />
         </Panel>
+
+        <BinauralControls />
+        <CompositionControls />
 
         <Panel title="Ambient layers" icon="waves" compact>
           <Text style={styles.sectionNote}>
@@ -305,7 +311,7 @@ function PlaybackControl({
           {status}
         </Text>
       </View>
-      <Pressable
+      <MotionPressable
         accessibilityRole="button"
         accessibilityState={{ disabled: !audioReady }}
         disabled={!audioReady}
@@ -324,7 +330,7 @@ function PlaybackControl({
         <Text style={[styles.playButtonText, isPlaying && styles.playButtonTextActive]}>
           {audioReady ? label : 'Tuning'}
         </Text>
-      </Pressable>
+      </MotionPressable>
     </View>
   );
 }
@@ -345,7 +351,7 @@ function NoiseChoice({
   const [focused, setFocused] = useState(false);
 
   return (
-    <Pressable
+    <MotionPressable
       accessibilityRole="button"
       accessibilityState={{ selected }}
       onPress={onPress}
@@ -358,6 +364,7 @@ function NoiseChoice({
         pressed && styles.noiseChoicePressed,
       ]}
     >
+      <SelectionWash selected={selected} color={colors.surfaceSelected} radius={14} />
       <View style={styles.noiseIcon}>
         <Icon name={icon} color={selected ? colors.accent : colors.dim} size={16} />
       </View>
@@ -367,7 +374,7 @@ function NoiseChoice({
         </Text>
         <Text style={styles.noiseDescription}>{noise.description.replace(' · ', ', ')}</Text>
       </View>
-    </Pressable>
+    </MotionPressable>
   );
 }
 
@@ -431,7 +438,6 @@ function createStyles(colors: ThemeColors) {
     },
     bandButtonSelected: {
       borderColor: colors.selectedBorder,
-      backgroundColor: colors.surfaceSelected,
     },
     bandButtonPressed: {
       opacity: 0.78,
@@ -553,7 +559,6 @@ function createStyles(colors: ThemeColors) {
     },
     noiseChoiceSelected: {
       borderColor: colors.selectedBorder,
-      backgroundColor: colors.surfaceSelected,
     },
     noiseChoicePressed: {
       opacity: 0.78,

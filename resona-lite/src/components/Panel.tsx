@@ -38,8 +38,8 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   compactPanel: {
-    padding: spacing.sm,
-    gap: spacing.xs,
+    padding: spacing.md,
+    gap: spacing.sm,
   },
   title: {
     fontFamily: fonts.display,

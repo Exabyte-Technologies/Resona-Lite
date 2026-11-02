@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  AccessibilityInfo,
   Animated,
-  Pressable,
+  Easing,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,6 +14,7 @@ import Icon, { type IconName } from '../components/Icon';
 import RangeControl from '../components/RangeControl';
 import Panel from '../components/Panel';
 import { fonts, spacing, useThemeColors, type ThemeColors } from '../theme';
+import { MotionPressable, SelectionWash, useMotionValue, useReducedMotion } from '../motion';
 
 type Props = {
   settings: SoundSettings;
@@ -85,7 +85,7 @@ export default function HomeScreen({
 
           <View style={styles.listeningArea}>
             <WaterRings isPlaying={isPlaying} />
-            <Pressable
+            <MotionPressable
               accessibilityRole="button"
               accessibilityState={{ disabled: !audioReady }}
               accessibilityLabel={isPlaying ? 'Pause your soundscape' : 'Play your soundscape'}
@@ -102,7 +102,7 @@ export default function HomeScreen({
               ]}
             >
               <PlayGlyph isPlaying={isPlaying} />
-            </Pressable>
+            </MotionPressable>
           </View>
           <Text style={styles.playPrompt}>
             {audioReady ? (isPlaying ? 'Pause soundscape' : 'Start listening') : 'Preparing sound'}
@@ -129,7 +129,7 @@ export default function HomeScreen({
             {MODES.map((mode) => {
               const selected = settings.mode === mode.id;
               return (
-                <Pressable
+                <MotionPressable
                   key={mode.id}
                   accessibilityRole="button"
                   accessibilityState={{ selected }}
@@ -143,6 +143,7 @@ export default function HomeScreen({
                     pressed && styles.modeButtonPressed,
                   ]}
                 >
+                  <SelectionWash selected={selected} color={colors.surfaceSelected} />
                   <View style={[styles.modeIcon, selected && styles.modeIconSelected]}>
                     <Icon
                       name={modeIcons[mode.id]}
@@ -157,7 +158,7 @@ export default function HomeScreen({
                     <Text style={styles.modeDescription}>{mode.description}</Text>
                   </View>
                   {selected ? <View style={styles.selectedMark} /> : null}
-                </Pressable>
+                </MotionPressable>
               );
             })}
           </View>
@@ -171,80 +172,39 @@ function WaterRings({ isPlaying }: { isPlaying: boolean }) {
   const colors = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [progress] = useState(() => new Animated.Value(0));
-  const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
-
+  const reduceMotion = useReducedMotion();
+  const activity = useMotionValue(isPlaying && !reduceMotion ? 1 : 0, 650);
   useEffect(() => {
-    let active = true;
-    const subscription = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduceMotion);
-    AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
-      if (active) setReduceMotion(enabled);
-    });
-    return () => {
-      active = false;
-      subscription.remove();
-    };
-  }, []);
-
-  useEffect(() => {
-    progress.stopAnimation();
-    progress.setValue(0);
-    if (!isPlaying || reduceMotion !== false) return;
-
-    const animation = Animated.loop(
-      Animated.timing(progress, {
-        toValue: 1,
-        duration: 3200,
-        useNativeDriver: true,
-      }),
-    );
-    animation.start();
-    return () => animation.stop();
+    if (!isPlaying || reduceMotion) {
+      const settle = Animated.timing(progress, { toValue:0, duration:reduceMotion ? 0 : 650, easing:Easing.out(Easing.cubic), useNativeDriver:true, isInteraction:false });
+      settle.start();
+      return () => settle.stop();
+    }
+    const breathe = Animated.loop(Animated.sequence([
+      Animated.timing(progress, { toValue:1, duration:2600, easing:Easing.inOut(Easing.sin), useNativeDriver:true, isInteraction:false }),
+      Animated.timing(progress, { toValue:0, duration:2600, easing:Easing.inOut(Easing.sin), useNativeDriver:true, isInteraction:false }),
+    ]), { iterations:-1, resetBeforeIteration:false });
+    breathe.start();
+    return () => breathe.stop();
   }, [isPlaying, progress, reduceMotion]);
-
-  const firstWave = {
-    opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [0.38, 0] }),
-    transform: [{ scale: progress.interpolate({ inputRange: [0, 1], outputRange: [0.72, 1.28] }) }],
-  };
-  const secondWave = {
-    opacity: progress.interpolate({
-      inputRange: [0, 0.4, 1],
-      outputRange: [0, 0.3, 0],
-    }),
-    transform: [
-      {
-        scale: progress.interpolate({
-          inputRange: [0, 0.4, 1],
-          outputRange: [0.76, 0.86, 1.3],
-        }),
-      },
-    ],
-  };
-  const animate = isPlaying && reduceMotion === false;
-
-  return (
-    <View pointerEvents="none" style={styles.rings}>
-      <Animated.View
-        style={[styles.ring, styles.outerRing, animate ? firstWave : styles.stillRing]}
-      />
-      <Animated.View
-        style={[styles.ring, styles.innerRing, animate ? secondWave : styles.stillRing]}
-      />
-    </View>
-  );
+  return <View pointerEvents="none" style={styles.rings}>
+    <Animated.View style={[styles.ring,styles.outerRing, { opacity:activity.interpolate({ inputRange:[0,1],outputRange:[0.35,0.16] }) }]} />
+    <Animated.View style={[styles.ring,styles.innerRing, { opacity:activity.interpolate({ inputRange:[0,1],outputRange:[0.35,0.2] }) }]} />
+    <Animated.View style={[styles.rings,{ opacity:activity }]}>
+      <Animated.View style={[styles.ring,styles.outerRing,{ opacity:progress.interpolate({ inputRange:[0,1],outputRange:[0.22,0.5] }),transform:[{ scale:progress.interpolate({ inputRange:[0,1],outputRange:[0.86,1.17] }) }] }]} />
+      <Animated.View style={[styles.ring,styles.innerRing,{ opacity:progress.interpolate({ inputRange:[0,1],outputRange:[0.42,0.2] }),transform:[{ scale:progress.interpolate({ inputRange:[0,1],outputRange:[0.94,1.13] }) }] }]} />
+    </Animated.View>
+  </View>;
 }
 
 function PlayGlyph({ isPlaying }: { isPlaying: boolean }) {
   const colors = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
-
-  return isPlaying ? (
-    <View style={styles.pauseGlyph}>
-      <View style={styles.pauseBar} />
-      <View style={styles.pauseBar} />
-    </View>
-  ) : (
-    <View style={styles.playGlyph} />
-  );
+  const progress = useMotionValue(isPlaying ? 1 : 0, 240);
+  return <View style={{ width:28,height:28,alignItems:'center',justifyContent:'center' }}>
+    <Animated.View style={{ position:'absolute',opacity:progress.interpolate({ inputRange:[0,1],outputRange:[1,0] }),transform:[{ scale:progress.interpolate({ inputRange:[0,1],outputRange:[1,0.75] }) }] }}><View style={styles.playGlyph} /></Animated.View>
+    <Animated.View style={{ position:'absolute',opacity:progress,transform:[{ scale:progress.interpolate({ inputRange:[0,1],outputRange:[0.75,1] }) }] }}><View style={styles.pauseGlyph}><View style={styles.pauseBar} /><View style={styles.pauseBar} /></View></Animated.View>
+  </View>;
 }
 
 function createStyles(colors: ThemeColors) {
@@ -293,7 +253,9 @@ function createStyles(colors: ThemeColors) {
     },
     player: {
       padding: spacing.md,
-      borderRadius: 24,
+      borderRadius: 26,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.selectedIconSurface,
       backgroundColor: colors.surfaceSelected,
     },
     playerHeading: {
@@ -448,7 +410,7 @@ function createStyles(colors: ThemeColors) {
     },
     modeButton: {
       width: '48%',
-      minHeight: 62,
+      minHeight: 72,
       flexDirection: 'row',
       alignItems: 'center',
       gap: spacing.xs,
@@ -461,7 +423,6 @@ function createStyles(colors: ThemeColors) {
     },
     modeButtonSelected: {
       borderColor: colors.selectedBorder,
-      backgroundColor: colors.surfaceSelected,
     },
     modeButtonPressed: {
       opacity: 0.82,
