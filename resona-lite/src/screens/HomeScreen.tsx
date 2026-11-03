@@ -24,7 +24,6 @@ import { MotionPressable, SelectionWash, useMotionValue, useReducedMotion } from
 
 type Props = {
   timer?: {deadline:number|null;remaining:number;finished:boolean;onChange:(minutes:number|null)=>void};
-  controls?: {supported:boolean;enabled:boolean;error:string|null;toggle:()=>void};
   settings: SoundSettings;
   isPlaying: boolean;
   audioReady: boolean;
@@ -44,7 +43,7 @@ const modeIcons: Record<Mode, IconName> = {
 
 export default function HomeScreen({
   settings,
-  timer, controls,
+  timer,
   isPlaying,
   audioReady,
   audioError,
@@ -188,7 +187,6 @@ export default function HomeScreen({
             {timer?<SleepTimer {...timer}/>:null}
           </View>
         </View>
-        {controls?.supported?<View><MotionPressable accessibilityRole="button" onPress={controls.toggle} style={{minHeight:44,justifyContent:'center',alignItems:'center'}}><Text style={{color:colors.accent,textDecorationLine:'underline',fontSize:13}}>{controls.enabled?'Disable Live Activity':'Enable Live Activity'}</Text></MotionPressable>{controls.error?<Text accessibilityLiveRegion="polite" style={{color:colors.muted,fontSize:12}}>{controls.error}</Text>:null}</View>:null}
       </ScrollView>
       <LayerBalanceDialog visible={balanceVisible} onClose={() => setBalanceVisible(false)} settings={settings} onChange={onLayerVolumeChange} />
     </>

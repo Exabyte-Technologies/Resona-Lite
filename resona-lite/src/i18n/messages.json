@@ -21,27 +21,38 @@
     "Resona Lite はリラクゼーションを目的としたアプリです。医学的な助言は行わず、病気や健康上の問題を診断、治療、治癒するものではありません。医療専門家によるケアの代わりにはなりません。",
     "Resona Lite 僅供放鬆使用。本 App 不提供醫療建議，也無法診斷、治療或治癒任何健康問題，不能取代專業醫療照護。"
   ],
-  "Enable Live Activity": [
-    "启用实时活动",
-    "Activar actividad en vivo",
-    "लाइव गतिविधि चालू करें",
-    "تفعيل النشاط المباشر",
-    "Ativar Atividade ao Vivo",
-    "Activer l’activité en direct",
-    "Включить Live Activity",
-    "ライブアクティビティを有効にする",
-    "啟用即時動態"
+  "Settings": [
+    "设置",
+    "Ajustes",
+    "सेटिंग",
+    "الإعدادات",
+    "Configurações",
+    "Réglages",
+    "Настройки",
+    "設定",
+    "設定"
   ],
-  "Disable Live Activity": [
-    "关闭实时活动",
-    "Desactivar actividad en vivo",
-    "लाइव गतिविधि बंद करें",
-    "إيقاف النشاط المباشر",
-    "Desativar Atividade ao Vivo",
-    "Désactiver l’activité en direct",
-    "Выключить Live Activity",
-    "ライブアクティビティを無効にする",
-    "關閉即時動態"
+  "Live Activities": [
+    "实时活动",
+    "Actividades en vivo",
+    "लाइव गतिविधियाँ",
+    "الأنشطة المباشرة",
+    "Atividades ao Vivo",
+    "Activités en direct",
+    "Активности в реальном времени",
+    "ライブアクティビティ",
+    "即時動態"
+  ],
+  "Show on Lock Screen": [
+    "在锁定屏幕上显示",
+    "Mostrar en la pantalla de bloqueo",
+    "लॉक स्क्रीन पर दिखाएँ",
+    "إظهار على شاشة القفل",
+    "Mostrar na tela bloqueada",
+    "Afficher sur l’écran verrouillé",
+    "Показывать на экране блокировки",
+    "ロック画面に表示",
+    "在鎖定畫面顯示"
   ],
   "Allow Live Activities for Resona Lite in Settings.": [
     "请在设置中允许 Resona Lite 使用实时活动。",
@@ -1957,16 +1968,16 @@
     "詳細設定のコード進行で「生成して適用」を押します。開始コードは省略できます。C Amin F G を試し、連続セットをオンにすると和声が変化し続けます。",
     "在進階設定中找到和弦進行，點選「產生並套用」。起始和弦可留空。試試 C Amin F G，再開啟連續和弦組，讓和聲持續變化。"
   ],
-  "The chord model runs on your device. Replay this tour any time using Quick tour at the bottom of Advanced.": [
-    "和弦模型在本机运行。随时点击高级设置底部的快速指南，即可重看。",
-    "El modelo funciona en tu dispositivo. Repite la guía al final de Avanzado.",
-    "कॉर्ड मॉडल डिवाइस पर चलता है। उन्नत के नीचे संक्षिप्त परिचय फिर खोल सकते हैं।",
-    "يعمل النموذج على جهازك. أعد الجولة من أسفل الإعدادات المتقدمة.",
-    "O modelo roda no dispositivo. Reveja o guia no final de Avançado.",
-    "Le modèle fonctionne sur votre appareil. Retrouvez la visite en bas des réglages avancés.",
-    "Модель работает на устройстве. Повторите обзор внизу расширенных настроек.",
-    "モデルは端末内で動作します。詳細設定の一番下からガイドをいつでも見直せます。",
-    "和弦模型在本機執行。隨時點選進階設定底部的快速導覽，即可重看。"
+  "The chord model runs on your device. To replay this tour, open Settings at the bottom of Advanced.": [
+    "和弦模型在本机运行。要重看指南，请打开高级页面底部的「设置」。",
+    "El modelo de acordes funciona en tu dispositivo. Para repetir la guía, abre Ajustes al final de Avanzado.",
+    "कॉर्ड मॉडल आपके डिवाइस पर चलता है। परिचय दोबारा देखने के लिए उन्नत के नीचे सेटिंग खोलें।",
+    "يعمل نموذج التآلفات على جهازك. لإعادة الجولة، افتح الإعدادات أسفل صفحة الخيارات المتقدمة.",
+    "O modelo de acordes roda no seu dispositivo. Para rever o guia, abra Configurações no fim da página Avançado.",
+    "Le modèle d’accords fonctionne sur votre appareil. Pour revoir la visite, ouvrez Réglages en bas de l’onglet Avancé.",
+    "Модель аккордов работает на вашем устройстве. Чтобы повторить обзор, откройте настройки внизу вкладки «Расширенные».",
+    "コードモデルは端末内で動作します。ガイドを見直すには、「詳細」の一番下にある「設定」を開いてください。",
+    "和弦模型在裝置上執行。若要重看導覽，請開啟進階頁面底部的「設定」。"
   ],
   "Sleep timer": [
     "睡眠定时",

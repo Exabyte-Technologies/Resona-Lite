@@ -82,6 +82,14 @@ test('all four modes use the website atmosphere, beat and exact equal-tempered t
     close(r.audio.config.carrier,440*2**((midi-69)/12));
   }
 });
+test('an idle system pause does not swallow the first tap on Play', async () => {
+  const r = runtime({ bridge: true });
+  await r.window.resonaCommand({ action: 'pauseAll' });
+  assert.equal(r.messages.at(-1).paused, false);
+  await r.window.resonaCommand({ action: 'toggleSession' });
+  assert.equal(r.messages.at(-1).playing, true);
+  assert.equal(r.messages.at(-1).ambientPlaying, true);
+});
 test('progressions retune ambient and binaural together; manual and chord timing stay separate',()=>{
   const {audio:a}=runtime(); a.start(); a.setChordProgression(['C','Amin','F','G'],2);
   assert.equal(a.config.ambient.chordProgression.join(' '),'C Amin F G');

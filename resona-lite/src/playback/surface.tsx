@@ -5,3 +5,5 @@ export async function initialize(_onAction: (action: PlaybackAction) => void) { 
 export async function requestAccess() { return false; }
 export async function show(_card: PlaybackCard) {}
 export async function hide() {}
+export async function readEnabled() { return false; }
+export function saveEnabled(_enabled: boolean) {}

@@ -13,18 +13,33 @@ const steps = [
   { eyebrow:'A little space for you', title:'Find your kind of quiet', description:'On Home, choose Sleep, Meditation, Focus or Awake. Each mood gently tunes your soundscape. You can change it whenever you like.', hint:'No setup needed. Just choose how you want to feel.', icon:'meditation' },
   { eyebrow:'Your first listening session', title:'Press play. Settle in.', description:'Tap the round play button to start ambient music and binaural beats together. Use Master volume to find a comfortable level, and tap again to pause.', hint:'Headphones help you hear the separate binaural tones.', icon:'headphones' },
   { eyebrow:'Make it your own', title:'Shape your sound', description:'Open Advanced to blend ambient layers, choose an atmosphere and tonal centre, or add rain, ocean and other noise textures. Each track has its own play button and volume.', hint:'Start with small changes. You can keep things simple on Home.', icon:'tune' },
-  { eyebrow:'Let the harmony unfold', title:'Explore living chords', description:'In Advanced, find Chord progression and tap Generate & apply. Starting chords are optional. Try C Amin F G, then turn on Continuous sets for evolving harmony.', hint:'The chord model runs on your device. Replay this tour any time using Quick tour at the bottom of Advanced.', icon:'layers' },
+  { eyebrow:'Let the harmony unfold', title:'Explore living chords', description:'In Advanced, find Chord progression and tap Generate & apply. Starting chords are optional. Try C Amin F G, then turn on Continuous sets for evolving harmony.', hint:'The chord model runs on your device. To replay this tour, open Settings at the bottom of Advanced.', icon:'layers' },
 ] as const;
 
 export default function Tutorial({ visible, showNotice, onClose }: { visible: boolean; showNotice: boolean; onClose: () => void }) {
+  const [noticeDismissed, setNoticeDismissed] = useState(false);
+  const noticeVisible = showNotice && !noticeDismissed;
+  const insets = useSafeAreaInsets();
+  const reduceMotion = useReducedMotion();
+  const { rtl } = useLanguage();
+  return <Modal supportedOrientations={tabletModalOrientations} visible={visible} transparent animationType={reduceMotion ? 'none' : 'fade'} onRequestClose={() => { if (!noticeVisible) onClose(); }} statusBarTranslucent>
+    <View style={[overlayStyle, { paddingTop:Math.max(insets.top,20), paddingBottom:Math.max(insets.bottom,20),direction:rtl?'rtl':'ltr' }]}>
+      <BlurBackdrop intensity={30} />
+      <TutorialCard noticeVisible={noticeVisible} onAcceptNotice={() => setNoticeDismissed(true)} onClose={onClose} />
+    </View>
+  </Modal>;
+}
+
+const overlayStyle = StyleSheet.create({
+  backdrop: { flex:1, paddingHorizontal:20, justifyContent:'center', alignItems:'center' },
+}).backdrop;
+
+export function TutorialCard({ noticeVisible = false, onAcceptNotice, onClose }: { noticeVisible?: boolean; onAcceptNotice?: () => void; onClose: () => void }) {
   const colors = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
   const { spacious } = useAccessibilitySettings();
   const [step, setStep] = useState(0);
-  const [noticeDismissed, setNoticeDismissed] = useState(false);
-  const noticeVisible = showNotice && !noticeDismissed;
   const [transitioning, setTransitioning] = useState(false);
   const [progress] = useState(() => new Animated.Value(1));
   useEffect(() => () => progress.stopAnimation(), [progress]);
@@ -36,7 +51,7 @@ export default function Tutorial({ visible, showNotice, onClose }: { visible: bo
     });
   }, [progress, reduceMotion]);
   const current = steps[step];
-  const {t,rtl}=useLanguage();
+  const {t}=useLanguage();
   const go = (next: number) => {
     if (transitioning || next === step) return;
     const update = () => {
@@ -51,55 +66,47 @@ export default function Tutorial({ visible, showNotice, onClose }: { visible: bo
       Animated.timing(progress, { toValue:1, duration:260, easing:Easing.out(Easing.cubic), useNativeDriver:true }).start(() => setTransitioning(false));
     });
   };
-  const requestClose = () => {
-    if (!noticeVisible) onClose();
-  };
-  return <Modal supportedOrientations={tabletModalOrientations} visible={visible} transparent animationType={reduceMotion ? 'none' : 'fade'} onRequestClose={requestClose} statusBarTranslucent>
-    <View style={[styles.backdrop, { paddingTop:Math.max(insets.top,20), paddingBottom:Math.max(insets.bottom,20),direction:rtl?'rtl':'ltr' }]}>
-      <BlurBackdrop intensity={30} />
-      <View style={styles.card} accessibilityViewIsModal>
-        <View style={styles.topBar}>
-          <Text style={styles.brand}>resona<Text style={{ color:colors.accent }}>.</Text><Text style={styles.lite}>  LITE</Text></Text>
-          {!noticeVisible && <MotionPressable accessibilityRole="button" accessibilityLabel="Skip tutorial" onPress={onClose} style={styles.textButton}><Text style={styles.secondaryText}>Skip tour</Text></MotionPressable>}
-        </View>
-        {noticeVisible ? <>
-          <ScrollView contentContainerStyle={styles.noticeBody}>
-            <Text accessibilityRole="header" style={styles.title}>Health notice</Text>
-            <Text style={styles.description}>Resona Lite is for relaxation. It does not provide medical advice or diagnose, treat, or cure any health condition. It is not a substitute for professional care.</Text>
-          </ScrollView>
-          <View style={styles.footer}>
-            <View style={styles.actions}>
-              <MotionPressable accessibilityRole="button" onPress={() => setNoticeDismissed(true)} style={styles.nextButton}>
-                <Text style={styles.nextText}>Continue</Text>
-              </MotionPressable>
-            </View>
-          </View>
-        </> : <>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.body}>
-            <Animated.View style={{ opacity:progress, transform:[{ translateY:progress.interpolate({ inputRange:[0,1], outputRange:[10,0] }) }] }}>
-              {!spacious && <TutorialArtwork step={step} icon={current.icon} />}
-              <Text style={styles.eyebrow}>{current.eyebrow}</Text>
-              <Text accessibilityRole="header" style={styles.title}>{current.title}</Text>
-              <Text style={styles.description}>{current.description}</Text>
-              <View style={styles.hint}><View style={styles.hintDot} /><Text style={styles.hintText}>{current.hint}</Text></View>
-            </Animated.View>
-          </ScrollView>
-          <View style={styles.footer}>
-            <View style={styles.progressRow}>
-              <Text style={styles.stepText}>{t('Step {{current}} of {{total}}',{current:step+1,total:steps.length})}</Text>
-              {!spacious && <View style={styles.dots}>
-                {steps.map((item,index) => <View key={item.title} accessible={false} style={styles.dotTarget}><View style={[styles.dot,index === step && styles.dotActive]} /></View>)}
-              </View>}
-            </View>
-            <View style={styles.actions}>
-              {step > 0 ? <MotionPressable accessibilityRole="button" disabled={transitioning} onPress={() => go(step-1)} style={styles.backButton}><Text style={styles.secondaryText}>Back</Text></MotionPressable> : null}
-              <MotionPressable accessibilityRole="button" disabled={transitioning} onPress={() => step === steps.length-1 ? onClose() : go(step+1)} style={[styles.nextButton, transitioning && { opacity:0.6 }]}><Text style={styles.nextText}>{step === steps.length-1 ? 'Let’s begin' : 'Continue'}<Text>  →</Text></Text></MotionPressable>
-            </View>
-          </View>
-        </>}
-      </View>
+  return <View style={styles.card} accessibilityViewIsModal>
+    <View style={styles.topBar}>
+      <Text style={styles.brand}>resona<Text style={{ color:colors.accent }}>.</Text><Text style={styles.lite}>  LITE</Text></Text>
+      {!noticeVisible && <MotionPressable accessibilityRole="button" accessibilityLabel="Skip tutorial" onPress={onClose} style={styles.textButton}><Text style={styles.secondaryText}>Skip tour</Text></MotionPressable>}
     </View>
-  </Modal>;
+    {noticeVisible ? <>
+      <ScrollView contentContainerStyle={styles.noticeBody}>
+        <Text accessibilityRole="header" style={styles.title}>Health notice</Text>
+        <Text style={styles.description}>Resona Lite is for relaxation. It does not provide medical advice or diagnose, treat, or cure any health condition. It is not a substitute for professional care.</Text>
+      </ScrollView>
+      <View style={styles.footer}>
+        <View style={styles.actions}>
+          <MotionPressable accessibilityRole="button" onPress={onAcceptNotice} style={styles.nextButton}>
+            <Text style={styles.nextText}>Continue</Text>
+          </MotionPressable>
+        </View>
+      </View>
+    </> : <>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.body}>
+        <Animated.View style={{ opacity:progress, transform:[{ translateY:progress.interpolate({ inputRange:[0,1], outputRange:[10,0] }) }] }}>
+          {!spacious && <TutorialArtwork step={step} icon={current.icon} />}
+          <Text style={styles.eyebrow}>{current.eyebrow}</Text>
+          <Text accessibilityRole="header" style={styles.title}>{current.title}</Text>
+          <Text style={styles.description}>{current.description}</Text>
+          <View style={styles.hint}><View style={styles.hintDot} /><Text style={styles.hintText}>{current.hint}</Text></View>
+        </Animated.View>
+      </ScrollView>
+      <View style={styles.footer}>
+        <View style={styles.progressRow}>
+          <Text style={styles.stepText}>{t('Step {{current}} of {{total}}',{current:step+1,total:steps.length})}</Text>
+          {!spacious && <View style={styles.dots}>
+            {steps.map((item,index) => <View key={item.title} accessible={false} style={styles.dotTarget}><View style={[styles.dot,index === step && styles.dotActive]} /></View>)}
+          </View>}
+        </View>
+        <View style={styles.actions}>
+          {step > 0 ? <MotionPressable accessibilityRole="button" disabled={transitioning} onPress={() => go(step-1)} style={styles.backButton}><Text style={styles.secondaryText}>Back</Text></MotionPressable> : null}
+          <MotionPressable accessibilityRole="button" disabled={transitioning} onPress={() => step === steps.length-1 ? onClose() : go(step+1)} style={[styles.nextButton, transitioning && { opacity:0.6 }]}><Text style={styles.nextText}>{step === steps.length-1 ? 'Let’s begin' : 'Continue'}<Text>  →</Text></Text></MotionPressable>
+        </View>
+      </View>
+    </>}
+  </View>;
 }
 
 function TutorialArtwork({ step, icon }: { step: number; icon: IconName }) {
@@ -117,7 +124,6 @@ function TutorialArtwork({ step, icon }: { step: number; icon: IconName }) {
 
 function createStyles(c: ThemeColors) {
   return StyleSheet.create({
-    backdrop:{ flex:1, paddingHorizontal:20, justifyContent:'center', alignItems:'center' },
     card:{ width:'100%', maxWidth:420, maxHeight:'100%', backgroundColor:c.surface, borderRadius:28, borderWidth:1, borderColor:c.line, overflow:'hidden' },
     topBar:{ flexDirection:'row', flexWrap:'wrap', alignItems:'center', justifyContent:'space-between', paddingHorizontal:24, paddingTop:12, gap:8 },
     brand:{ fontSize:23, fontWeight:'700', letterSpacing:-1, color:c.ink, fontFamily:fonts.body },

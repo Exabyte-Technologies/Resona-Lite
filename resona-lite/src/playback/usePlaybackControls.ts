@@ -1,19 +1,24 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Linking, Platform } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AppState, Linking } from 'react-native';
 import { useLanguage } from '../i18n';
 import * as surface from './surface';
 import { initializePlayback, updatePlayback, disposePlayback } from './runtime';
 import type { PlaybackAction } from './types';
 
+const unavailable = 'Playback controls are unavailable.';
+const permissionRequired = 'Allow Live Activities for Resona Lite in Settings.';
+
 type Props = { playing: boolean; mood: string; deadline: number | null; onAction: (action: PlaybackAction, expired?: boolean) => void; session: boolean };
 export function usePlaybackControls({ playing, mood, deadline, onAction, session }: Props) {
   const { t } = useLanguage();
-  const [enabled, setEnabled] = useState(Platform.OS === 'ios');
+  const [enabled, setEnabled] = useState(surface.supported);
   const [error, setError] = useState<string | null>(null);
   const actionRef = useRef(onAction);
   useEffect(() => { actionRef.current = onAction; }, [onAction]);
-  const queue = useRef<Promise<unknown>>(Promise.resolve());
-  const [initialized, setInitialized] = useState(false);
+  const surfaceQueue = useRef<Promise<void>>(Promise.resolve());
+  const [nativeReady, setNativeReady] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [appState, setAppState] = useState(AppState.currentState);
 
   useEffect(() => {
     let mounted = true;
@@ -27,36 +32,76 @@ export function usePlaybackControls({ playing, mood, deadline, onAction, session
       } catch {}
     };
     const links = Linking.addEventListener('url', event => receive(event.url));
-    queue.current = initializePlayback((action, expired) => actionRef.current(action, expired)).then(async cleanup => {
+    const foreground = AppState.addEventListener('change', setAppState);
+    void initializePlayback((action, expired) => actionRef.current(action, expired)).then(cleanup => {
       disposeNative = cleanup;
-      disposeSurface = await surface.initialize(action => actionRef.current(action));
-      if (mounted) setInitialized(true); else { disposeNative(); disposeSurface(); }
-    }).catch((problem: unknown) => { if (mounted) setError(t(problem instanceof Error ? problem.message : 'Playback controls are unavailable.')); });
-    void Linking.getInitialURL().then(receive).catch(() => {});
+      if (mounted) setNativeReady(true);
+      else disposeNative();
+    }).catch(problem => console.warn('Could not configure playback controls', problem));
+    if (surface.supported) {
+      surfaceQueue.current = surfaceQueue.current.then(async () => {
+        disposeSurface = await surface.initialize(action => actionRef.current(action));
+        const preference = await surface.readEnabled().catch(() => true);
+        if (mounted) {
+          setEnabled(preference);
+          setReady(true);
+        } else disposeSurface();
+      }).catch(problem => {
+        console.warn('Could not initialize Live Activities', problem);
+        if (mounted) setError(unavailable);
+      });
+    }
+    void Linking.getInitialURL().then(url => { if (mounted) receive(url); }).catch(() => {});
     return () => {
-      mounted = false; links.remove(); disposeNative(); disposeSurface();
-      queue.current = queue.current.then(async () => { await surface.hide(); await disposePlayback(); }).catch(() => {});
+      mounted = false;
+      links.remove();
+      foreground.remove();
+      disposeNative();
+      disposeSurface();
+      void disposePlayback().catch(() => {});
+      surfaceQueue.current = surfaceQueue.current.then(surface.hide).catch(() => {});
     };
-    // Current actions are read through actionRef; the native session is initialized once.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const toggle = useCallback(async () => {
+  const changeEnabled = useCallback((value: boolean) => {
+    setEnabled(value);
     setError(null);
-    if (enabled) { setEnabled(false); return; }
-    try {
-      if (await surface.requestAccess()) setEnabled(true);
-      else setError(t('Allow Live Activities for Resona Lite in Settings.'));
-    } catch { setError(t('Playback controls are unavailable.')); }
-  }, [enabled, t]);
+    try { surface.saveEnabled(value); }
+    catch (problem) { console.warn('Could not save the Live Activities preference', problem); }
+  }, []);
+
+  const card = useMemo(() => ({
+    playing, mood: t(mood), status: t(playing ? 'Playing' : 'Paused'),
+    playLabel: t(playing ? 'Pause' : 'Play'), stopLabel: t('Stop'),
+    extendLabel: t('+15 min'), helper: '', deadline, timerLabel: t('Sleep timer'), logo: '',
+  }), [playing, mood, deadline, t]);
 
   useEffect(() => {
-    if (!initialized) return;
-    const card = { playing, mood: t(mood), status: t(playing ? 'Playing' : 'Paused'), playLabel: t(playing ? 'Pause' : 'Play'), stopLabel: t('Stop'), extendLabel: t('+15 min'), helper: '', deadline, timerLabel: t('Sleep timer'), logo: '' };
-    queue.current = queue.current.then(async () => {
-      await updatePlayback(card, session);
-      if (enabled && session) await surface.show(card); else await surface.hide();
-    }).catch((problem: unknown) => setError(t(problem instanceof Error ? problem.message : 'Playback controls are unavailable.')));
-  }, [enabled, initialized, session, playing, mood, deadline, t]);
-  return { supported: surface.supported, enabled, error, toggle };
+    if (!nativeReady) return;
+    void updatePlayback(card, session)
+      .catch(problem => console.warn('Could not update playback controls', problem));
+  }, [nativeReady, card, session]);
+
+  useEffect(() => {
+    if (!ready) return;
+    let current = true;
+    surfaceQueue.current = surfaceQueue.current.then(async () => {
+      if (!current) return;
+      if (!enabled) {
+        await surface.hide();
+        return;
+      }
+      const allowed = await surface.requestAccess();
+      if (!current) return;
+      setError(allowed ? null : permissionRequired);
+      if (allowed && session) await surface.show(card);
+      else await surface.hide();
+    }).catch(problem => {
+      console.warn('Could not update the Live Activity', problem);
+      if (current) setError(unavailable);
+    });
+    return () => { current = false; };
+  }, [enabled, ready, card, session, appState]);
+
+  return { supported: surface.supported, ready, enabled, error, setEnabled: changeEnabled };
 }

@@ -12,6 +12,7 @@ public final class ResonaPlaybackModule: Module {
   private var sleepTimer: DispatchSourceTimer?
   private var deadline: Double?
   private var playing = false
+  private var hasPublishedSession = false
   private var shouldResume = false
 
   public func definition() -> ModuleDefinition {
@@ -35,7 +36,8 @@ public final class ResonaPlaybackModule: Module {
   }
 
   private func configure() throws {
-    try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.allowAirPlay, .allowBluetoothA2DP])
+    // The playback category already supports AirPlay and stereo Bluetooth.
+    try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
     guard commandTargets.isEmpty else { return }
     let center = MPRemoteCommandCenter.shared()
     for (command, action) in [(center.playCommand, "play"), (center.pauseCommand, "pause"), (center.stopCommand, "stop"), (center.togglePlayPauseCommand, "toggle")] {
@@ -49,7 +51,12 @@ public final class ResonaPlaybackModule: Module {
     center.nextTrackCommand.isEnabled = false; center.previousTrackCommand.isEnabled = false
     observers.append(NotificationCenter.default.addObserver(forName: AVAudioSession.interruptionNotification, object: nil, queue: .main) { [weak self] note in
       guard let self, let raw = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt, let type = AVAudioSession.InterruptionType(rawValue: raw) else { return }
-      if type == .began { self.shouldResume = self.playing; self.emit("pause") }
+      if type == .began {
+        // A delayed suspension notification describes the previous app state.
+        guard note.userInfo?[AVAudioSessionInterruptionWasSuspendedKey] as? Bool != true, self.playing else { return }
+        self.shouldResume = true
+        self.emit("pause")
+      }
       else {
         let options = AVAudioSession.InterruptionOptions(rawValue: note.userInfo?[AVAudioSessionInterruptionOptionKey] as? UInt ?? 0)
         if self.shouldResume && options.contains(.shouldResume) { self.emit("play") }
@@ -57,7 +64,9 @@ public final class ResonaPlaybackModule: Module {
       }
     })
     observers.append(NotificationCenter.default.addObserver(forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main) { [weak self] note in
-      if note.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt == AVAudioSession.RouteChangeReason.oldDeviceUnavailable.rawValue { self?.shouldResume = false; self?.emit("pause") }
+      guard let self, note.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt == AVAudioSession.RouteChangeReason.oldDeviceUnavailable.rawValue else { return }
+      self.shouldResume = false
+      if self.playing { self.emit("pause") }
     })
   }
 
@@ -76,11 +85,16 @@ public final class ResonaPlaybackModule: Module {
       }
     }
     guard session else {
+      // Idle snapshots can arrive before Web Audio acknowledges a new play request.
+      guard hasPublishedSession else { return }
+      hasPublishedSession = false
+      shouldResume = false
       MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
       MPNowPlayingInfoCenter.default().playbackState = .stopped
       try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
       return
     }
+    hasPublishedSession = true
     var info: [String: Any] = [MPMediaItemPropertyTitle: "resona", MPMediaItemPropertyArtist: data["mood"] as? String ?? "Resona Lite", MPNowPlayingInfoPropertyIsLiveStream: true, MPNowPlayingInfoPropertyPlaybackRate: playing ? 1.0 : 0.0]
     if let path = data["logo"] as? String, let url = URL(string: path), let image = UIImage(contentsOfFile: url.path) {
       info[MPMediaItemPropertyArtwork] = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
@@ -90,6 +104,9 @@ public final class ResonaPlaybackModule: Module {
   }
 
   private func dispose() {
+    hasPublishedSession = false
+    shouldResume = false
+    playing = false
     sleepTimer?.cancel(); sleepTimer = nil
     for (command, target) in commandTargets { command.removeTarget(target) }; commandTargets.removeAll()
     observers.forEach(NotificationCenter.default.removeObserver); observers.removeAll()

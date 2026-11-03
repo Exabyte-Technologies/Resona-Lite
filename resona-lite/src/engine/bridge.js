@@ -121,7 +121,13 @@
         await resumeTransport();
         if (!hadTracks) { audio.start(); audio.startAmbient(); }
       }
-      else if (action === 'pauseAll') { transportPaused = true; if (audio.context) await audio.context.suspend(); }
+      else if (action === 'pauseAll') {
+        // An idle system pause must not leave an empty graph waiting to resume.
+        if (audio.playing || audio.ambientPlaying || audio.noisePlaying) {
+          transportPaused = true;
+          await audio.context.suspend();
+        }
+      }
       else if (action === 'generate') { await generate(args[0]); return; }
       if (action === 'continuous') {
         if (!args[0]) { reset(false); generating = false; }
