@@ -1,3 +1,4 @@
+import { tabletModalOrientations } from '../layout';
 import { Modal, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAccessibilitySettings } from '../accessibility';
@@ -26,7 +27,7 @@ export default function AccessibilitySettings({ visible, onClose }: { visible: b
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
 
-  return <Modal visible={visible} transparent animationType={reduceMotion ? 'none' : 'fade'} onRequestClose={onClose} statusBarTranslucent>
+  return <Modal supportedOrientations={tabletModalOrientations} visible={visible} transparent animationType={reduceMotion ? 'none' : 'fade'} onRequestClose={onClose} statusBarTranslucent>
     <View style={[styles.overlay, {
       paddingTop: Math.max(16, insets.top),
       paddingBottom: Math.max(16, insets.bottom),

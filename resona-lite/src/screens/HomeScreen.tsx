@@ -13,6 +13,7 @@ import type { Mode, SoundSettings } from '../model';
 import { MODES } from '../model';
 import AudioErrorNotice from '../components/AudioErrorNotice';
 import { useAccessibilitySettings } from '../accessibility';
+import { cardLayout, useTwoColumnLayout } from '../layout';
 import Icon, { type IconName } from '../components/Icon';
 import RangeControl from '../components/RangeControl';
 import Panel from '../components/Panel';
@@ -55,6 +56,7 @@ export default function HomeScreen({
   const { quote } = useHomeQuote();
   const colors = useThemeColors();
   const { spacious } = useAccessibilitySettings();
+  const twoColumns = useTwoColumnLayout();
   const styles = useMemo(() => createStyles(colors, spacious), [colors, spacious]);
   const [playFocused, setPlayFocused] = useState(false);
   const [balanceVisible, setBalanceVisible] = useState(false);
@@ -63,7 +65,7 @@ export default function HomeScreen({
   return (
     <>
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[cardLayout.page, styles.content]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
@@ -79,108 +81,113 @@ export default function HomeScreen({
           </Text>
         </View>
 
-        <View style={styles.player}>
-          <View style={styles.playerHeading}>
-            <View style={styles.playerCopy}>
-              <Text style={styles.playerTitle}>Your soundscape</Text>
-              <View style={styles.headphones}>
-                <Icon name="headphones" color={colors.muted} size={14} />
-                <Text style={styles.playerHint}>Headphones recommended</Text>
+        <View style={[cardLayout.group, twoColumns && cardLayout.sideBySide]}>
+          <View style={twoColumns && cardLayout.column}>
+            <View style={styles.player}>
+              <View style={styles.playerHeading}>
+                <View style={styles.playerCopy}>
+                  <Text style={styles.playerTitle}>Your soundscape</Text>
+                  <View style={styles.headphones}>
+                    <Icon name="headphones" color={colors.muted} size={14} />
+                    <Text style={styles.playerHint}>Headphones recommended</Text>
+                  </View>
+                </View>
+                <View style={[styles.statusPill, isPlaying && styles.statusPillPlaying]}>
+                  <View style={[styles.statusDot, isPlaying && styles.statusDotPlaying]} />
+                  <Text accessibilityLiveRegion="polite" style={styles.playState}>
+                    {isPlaying ? 'Playing' : audioReady ? 'Ready' : 'Tuning'}
+                  </Text>
+                </View>
               </View>
-            </View>
-            <View style={[styles.statusPill, isPlaying && styles.statusPillPlaying]}>
-              <View style={[styles.statusDot, isPlaying && styles.statusDotPlaying]} />
-              <Text accessibilityLiveRegion="polite" style={styles.playState}>
-                {isPlaying ? 'Playing' : audioReady ? 'Ready' : 'Tuning'}
-              </Text>
-            </View>
-          </View>
 
-          <View style={styles.listeningArea}>
-            <WaterRings isPlaying={isPlaying} />
-            <MotionPressable
-              accessibilityRole="button"
-              accessibilityState={{ disabled: !audioReady }}
-              accessibilityLabel={isPlaying ? 'Pause your soundscape' : 'Play your soundscape'}
-              disabled={!audioReady}
-              onPress={onTogglePlayback}
-              onFocus={() => setPlayFocused(true)}
-              onBlur={() => setPlayFocused(false)}
-              style={({ pressed }) => [
-                styles.playButton,
-                isPlaying && styles.playButtonActive,
-                !audioReady && styles.playButtonDisabled,
-                playFocused && styles.focused,
-                pressed && audioReady && styles.playButtonActive,
-              ]}
-            >
-              <PlayGlyph isPlaying={isPlaying} />
-            </MotionPressable>
-          </View>
-          <Text style={styles.playPrompt}>
-            {audioReady ? (isPlaying ? 'Pause soundscape' : 'Start listening') : 'Preparing sound'}
-          </Text>
-
-          <View style={styles.volumeArea}>
-            <RangeControl
-              title="Master volume"
-              description="All sound layers"
-              value={settings.masterVolume}
-              minimum={0}
-              maximum={100}
-              unit="%"
-              onChange={onMasterVolumeChange}
-            />
-          </View>
-          <MotionPressable accessibilityRole="button" accessibilityLabel="Open layer balance" onPress={() => setBalanceVisible(true)} style={styles.balanceButton}>
-            <Icon name="balance" size={17} />
-            <Text style={styles.balanceButtonText}>Layer balance</Text>
-          </MotionPressable>
-        </View>
-
-        <Panel title="Choose a mood" icon="meditation" compact>
-          <Text style={styles.modeNote}>
-            Each mode tunes your binaural beat and ambient layers. Fine-tune everything in Advanced.
-          </Text>
-          <View style={styles.modeGrid}>
-            {MODES.map((mode) => {
-              const selected = settings.mode === mode.id;
-              return (
+              <View style={styles.listeningArea}>
+                <WaterRings isPlaying={isPlaying} />
                 <MotionPressable
-                  key={mode.id}
                   accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                  onPress={() => onSelectMode(mode.id)}
-                  onFocus={() => setFocusedMode(mode.id)}
-                  onBlur={() => setFocusedMode(null)}
+                  accessibilityState={{ disabled: !audioReady }}
+                  accessibilityLabel={isPlaying ? 'Pause your soundscape' : 'Play your soundscape'}
+                  disabled={!audioReady}
+                  onPress={onTogglePlayback}
+                  onFocus={() => setPlayFocused(true)}
+                  onBlur={() => setPlayFocused(false)}
                   style={({ pressed }) => [
-                    styles.modeButton,
-                    selected && styles.modeButtonSelected,
-                    focusedMode === mode.id && styles.focused,
-                    pressed && styles.modeButtonPressed,
+                    styles.playButton,
+                    isPlaying && styles.playButtonActive,
+                    !audioReady && styles.playButtonDisabled,
+                    playFocused && styles.focused,
+                    pressed && audioReady && styles.playButtonActive,
                   ]}
                 >
-                  <SelectionWash selected={selected} color={colors.surfaceSelected} />
-                  <View style={[styles.modeIcon, selected && styles.modeIconSelected]}>
-                    <Icon
-                      name={modeIcons[mode.id]}
-                      color={selected ? colors.accent : colors.dim}
-                      size={18}
-                    />
-                  </View>
-                  <View style={styles.modeCopy}>
-                    <Text style={[styles.modeName, selected && styles.modeNameSelected]}>
-                      {mode.title}
-                    </Text>
-                    <Text style={styles.modeDescription}>{mode.description}</Text>
-                  </View>
-                  {selected && <Icon name="check" size={16} />}
+                  <PlayGlyph isPlaying={isPlaying} />
                 </MotionPressable>
-              );
-            })}
+              </View>
+              <Text style={styles.playPrompt}>
+                {audioReady ? (isPlaying ? 'Pause soundscape' : 'Start listening') : 'Preparing sound'}
+              </Text>
+
+              <View style={styles.volumeArea}>
+                <RangeControl
+                  title="Master volume"
+                  description="All sound layers"
+                  value={settings.masterVolume}
+                  minimum={0}
+                  maximum={100}
+                  unit="%"
+                  onChange={onMasterVolumeChange}
+                />
+              </View>
+              <MotionPressable accessibilityRole="button" accessibilityLabel="Open layer balance" onPress={() => setBalanceVisible(true)} style={styles.balanceButton}>
+                <Icon name="balance" size={17} />
+                <Text style={styles.balanceButtonText}>Layer balance</Text>
+              </MotionPressable>
+            </View>
           </View>
-        </Panel>
-        {timer?<SleepTimer {...timer}/>:null}
+          <View style={[cardLayout.group, twoColumns && cardLayout.column]}>
+            <Panel title="Choose a mood" icon="meditation" compact>
+              <Text style={styles.modeNote}>
+                Each mode tunes your binaural beat and ambient layers. Fine-tune everything in Advanced.
+              </Text>
+              <View style={styles.modeGrid}>
+                {MODES.map((mode) => {
+                  const selected = settings.mode === mode.id;
+                  return (
+                    <MotionPressable
+                      key={mode.id}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected }}
+                      onPress={() => onSelectMode(mode.id)}
+                      onFocus={() => setFocusedMode(mode.id)}
+                      onBlur={() => setFocusedMode(null)}
+                      style={({ pressed }) => [
+                        styles.modeButton,
+                        selected && styles.modeButtonSelected,
+                        focusedMode === mode.id && styles.focused,
+                        pressed && styles.modeButtonPressed,
+                      ]}
+                    >
+                      <SelectionWash selected={selected} color={colors.surfaceSelected} />
+                      <View style={[styles.modeIcon, selected && styles.modeIconSelected]}>
+                        <Icon
+                          name={modeIcons[mode.id]}
+                          color={selected ? colors.accent : colors.dim}
+                          size={18}
+                        />
+                      </View>
+                      <View style={styles.modeCopy}>
+                        <Text style={[styles.modeName, selected && styles.modeNameSelected]}>
+                          {mode.title}
+                        </Text>
+                        <Text style={styles.modeDescription}>{mode.description}</Text>
+                      </View>
+                      {selected && <Icon name="check" size={16} />}
+                    </MotionPressable>
+                  );
+                })}
+              </View>
+            </Panel>
+            {timer?<SleepTimer {...timer}/>:null}
+          </View>
+        </View>
         {controls?.supported?<View><MotionPressable accessibilityRole="button" onPress={controls.toggle} style={{minHeight:44,justifyContent:'center',alignItems:'center'}}><Text style={{color:colors.accent,textDecorationLine:'underline',fontSize:13}}>{controls.enabled?'Disable Live Activity':'Enable Live Activity'}</Text></MotionPressable>{controls.error?<Text accessibilityLiveRegion="polite" style={{color:colors.muted,fontSize:12}}>{controls.error}</Text>:null}</View>:null}
       </ScrollView>
       <LayerBalanceDialog visible={balanceVisible} onClose={() => setBalanceVisible(false)} settings={settings} onChange={onLayerVolumeChange} />

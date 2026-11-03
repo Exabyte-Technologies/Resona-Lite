@@ -7,6 +7,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import AudioErrorNotice from '../components/AudioErrorNotice';
 import AccessibilitySettings from '../components/AccessibilitySettings';
 import { useAccessibilitySettings } from '../accessibility';
+import { cardLayout, useTwoColumnLayout } from '../layout';
 import Icon, { type IconName } from '../components/Icon';
 import Panel from '../components/Panel';
 import RangeControl from '../components/RangeControl';
@@ -68,6 +69,7 @@ export default function AdvancedScreen({
 }: Props) {
   const colors = useThemeColors();
   const { spacious } = useAccessibilitySettings();
+  const twoColumns = useTwoColumnLayout();
   const styles = useMemo(() => createStyles(colors, spacious), [colors, spacious]);
   const [accessibilityVisible, setAccessibilityVisible] = useState(false);
   const [focusedBand, setFocusedBand] = useState<number | null>(null);
@@ -78,7 +80,7 @@ export default function AdvancedScreen({
   return (
     <>
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[cardLayout.page, styles.content]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
@@ -88,177 +90,182 @@ export default function AdvancedScreen({
           <Text style={styles.description}>Rhythm, texture, tone and balance.</Text>
         </View>
 
-        <Panel title="Binaural rhythm" icon="frequency" compact>
-          <Text style={styles.sectionNote}>
-            Choose a frequency difference to set the pace.
-          </Text>
-          <View style={styles.bandGrid}>
-            {BEAT_BANDS.map((band) => {
-              const selected = settings.beatHz === band.hz;
-              return (
-                <MotionPressable
-                  key={band.hz}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                  onPress={() => onSettingChange('beatHz', band.hz)}
-                  onFocus={() => setFocusedBand(band.hz)}
-                  onBlur={() => setFocusedBand(null)}
-                  style={({ pressed }) => [
-                    styles.bandButton,
-                    band.hz === 36 && styles.gammaBand,
-                    selected && styles.bandButtonSelected,
-                    focusedBand === band.hz && styles.focused,
-                    pressed && styles.bandButtonPressed,
-                  ]}
-                >
-                  <SelectionWash selected={selected} color={colors.surfaceSelected} radius={14} />
-                  <View style={styles.bandInfo}>
-                    <Text style={[styles.bandName, selected && styles.selectedText]}>
-                      {band.name}
-                    </Text>
-                    <Text style={styles.bandDescription}>{band.purpose}</Text>
-                  </View>
-                  <Text style={[styles.bandFrequency, selected && styles.selectedText]}>
-                    {band.hz} Hz
-                  </Text>
-                  {selected && <Icon name="check" size={16} />}
-                </MotionPressable>
-              );
-            })}
+        <View style={[cardLayout.group, twoColumns && cardLayout.sideBySide]}>
+          <View style={[cardLayout.group, twoColumns && cardLayout.column]}>
+            <Panel title="Binaural rhythm" icon="frequency" compact>
+              <Text style={styles.sectionNote}>
+                Choose a frequency difference to set the pace.
+              </Text>
+              <View style={styles.bandGrid}>
+                {BEAT_BANDS.map((band) => {
+                  const selected = settings.beatHz === band.hz;
+                  return (
+                    <MotionPressable
+                      key={band.hz}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected }}
+                      onPress={() => onSettingChange('beatHz', band.hz)}
+                      onFocus={() => setFocusedBand(band.hz)}
+                      onBlur={() => setFocusedBand(null)}
+                      style={({ pressed }) => [
+                        styles.bandButton,
+                        band.hz === 36 && styles.gammaBand,
+                        selected && styles.bandButtonSelected,
+                        focusedBand === band.hz && styles.focused,
+                        pressed && styles.bandButtonPressed,
+                      ]}
+                    >
+                      <SelectionWash selected={selected} color={colors.surfaceSelected} radius={14} />
+                      <View style={styles.bandInfo}>
+                        <Text style={[styles.bandName, selected && styles.selectedText]}>
+                          {band.name}
+                        </Text>
+                        <Text style={styles.bandDescription}>{band.purpose}</Text>
+                      </View>
+                      <Text style={[styles.bandFrequency, selected && styles.selectedText]}>
+                        {band.hz} Hz
+                      </Text>
+                      {selected && <Icon name="check" size={16} />}
+                    </MotionPressable>
+                  );
+                })}
+              </View>
+              <PlaybackControl
+                icon="frequency"
+                status={binauralPlaying ? 'Binaural beats playing' : 'Binaural beats ready'}
+                label={binauralPlaying ? 'Pause binaural' : 'Play binaural'}
+                isPlaying={binauralPlaying}
+                audioReady={audioReady}
+                onPress={onToggleBinaural}
+              />
+            </Panel>
+
+            <BinauralControls />
+            <Panel title="Layer balance" icon="balance" compact>
+              <Text style={styles.sectionNote}>
+                Set each layer while it plays alone or alongside the others.
+              </Text>
+              <LayerBalanceControls settings={settings} onChange={onSettingChange} />
+            </Panel>
           </View>
-          <PlaybackControl
-            icon="frequency"
-            status={binauralPlaying ? 'Binaural beats playing' : 'Binaural beats ready'}
-            label={binauralPlaying ? 'Pause binaural' : 'Play binaural'}
-            isPlaying={binauralPlaying}
-            audioReady={audioReady}
-            onPress={onToggleBinaural}
-          />
-        </Panel>
+          <View style={[cardLayout.group, twoColumns && cardLayout.column]}>
+            <Panel title="Ambient layers" icon="waves" compact>
+              <Text style={styles.sectionNote}>
+                Blend a steady drone with pads, texture, melody and space.
+              </Text>
+              <View style={styles.mixerGrid}>
+                <View style={styles.mixerTile}>
+                  <RangeControl
+                    compact
+                    grid
+                    title="Root frequency"
+                    description="Ambient and binaural base"
+                    value={settings.droneFrequency}
+                    minimum={40}
+                    maximum={400}
+                    unit=" Hz"
+                    onChange={(value) => onSettingChange('droneFrequency', value)}
+                  />
+                </View>
+                <View style={styles.mixerTile}>
+                  <RangeControl
+                    compact
+                    grid
+                    title="Drone"
+                    description="Low foundation"
+                    value={settings.drone}
+                    minimum={0}
+                    maximum={100}
+                    onChange={(value) => onSettingChange('drone', value)}
+                  />
+                </View>
+                <View style={styles.mixerTile}>
+                  <RangeControl
+                    compact
+                    grid
+                    title="Lush pads"
+                    description="Harmonic bloom"
+                    value={settings.pads}
+                    minimum={0}
+                    maximum={100}
+                    onChange={(value) => onSettingChange('pads', value)}
+                  />
+                </View>
+                <View style={styles.mixerTile}>
+                  <RangeControl
+                    compact
+                    grid
+                    title="Texture"
+                    description="Air and organic detail"
+                    value={settings.textures}
+                    minimum={0}
+                    maximum={100}
+                    onChange={(value) => onSettingChange('textures', value)}
+                  />
+                </View>
+                <View style={styles.mixerTile}>
+                  <RangeControl
+                    compact
+                    grid
+                    title="Melody"
+                    description="Sparse glimmers"
+                    value={settings.melody}
+                    minimum={0}
+                    maximum={100}
+                    onChange={(value) => onSettingChange('melody', value)}
+                  />
+                </View>
+                <View style={styles.mixerTile}>
+                  <RangeControl
+                    compact
+                    grid
+                    title="Spatial"
+                    description="Width and echo"
+                    value={settings.spatial}
+                    minimum={0}
+                    maximum={100}
+                    onChange={(value) => onSettingChange('spatial', value)}
+                  />
+                </View>
+              </View>
+              <PlaybackControl
+                icon="waves"
+                status={ambientPlaying ? 'Soundscape playing' : 'Soundscape ready'}
+                label={ambientPlaying ? 'Pause ambient' : 'Generate ambient'}
+                isPlaying={ambientPlaying}
+                audioReady={audioReady}
+                onPress={onToggleAmbient}
+              />
+            </Panel>
 
-        <BinauralControls />
-        <CompositionControls />
-
-        <Panel title="Ambient layers" icon="waves" compact>
-          <Text style={styles.sectionNote}>
-            Blend a steady drone with pads, texture, melody and space.
-          </Text>
-          <View style={styles.mixerGrid}>
-            <View style={styles.mixerTile}>
-              <RangeControl
-                compact
-                grid
-                title="Root frequency"
-                description="Ambient and binaural base"
-                value={settings.droneFrequency}
-                minimum={40}
-                maximum={400}
-                unit=" Hz"
-                onChange={(value) => onSettingChange('droneFrequency', value)}
+            <Panel title="Noise colour" icon="noise" compact>
+              <Text style={styles.sectionNote}>
+                Pick a steady noise or a natural texture.
+              </Text>
+              <View style={styles.noiseGrid}>
+                {NOISE_TYPES.map((noise) => (
+                  <NoiseChoice
+                    key={noise.id}
+                    noise={noise}
+                    icon={noiseIcons[noise.id]}
+                    selected={settings.noise === noise.id}
+                    onPress={() => onSettingChange('noise', noise.id)}
+                  />
+                ))}
+              </View>
+              <PlaybackControl
+                icon={noiseIcons[settings.noise]}
+                status={t('{{noise}} noise {{status}}',{noise:t(capitalize(settings.noise)),status:t(noisePlaying?'Playing':'Ready')})}
+                label={noisePlaying ? 'Pause noise' : 'Play noise'}
+                isPlaying={noisePlaying}
+                audioReady={audioReady}
+                onPress={onToggleNoise}
               />
-            </View>
-            <View style={styles.mixerTile}>
-              <RangeControl
-                compact
-                grid
-                title="Drone"
-                description="Low foundation"
-                value={settings.drone}
-                minimum={0}
-                maximum={100}
-                onChange={(value) => onSettingChange('drone', value)}
-              />
-            </View>
-            <View style={styles.mixerTile}>
-              <RangeControl
-                compact
-                grid
-                title="Lush pads"
-                description="Harmonic bloom"
-                value={settings.pads}
-                minimum={0}
-                maximum={100}
-                onChange={(value) => onSettingChange('pads', value)}
-              />
-            </View>
-            <View style={styles.mixerTile}>
-              <RangeControl
-                compact
-                grid
-                title="Texture"
-                description="Air and organic detail"
-                value={settings.textures}
-                minimum={0}
-                maximum={100}
-                onChange={(value) => onSettingChange('textures', value)}
-              />
-            </View>
-            <View style={styles.mixerTile}>
-              <RangeControl
-                compact
-                grid
-                title="Melody"
-                description="Sparse glimmers"
-                value={settings.melody}
-                minimum={0}
-                maximum={100}
-                onChange={(value) => onSettingChange('melody', value)}
-              />
-            </View>
-            <View style={styles.mixerTile}>
-              <RangeControl
-                compact
-                grid
-                title="Spatial"
-                description="Width and echo"
-                value={settings.spatial}
-                minimum={0}
-                maximum={100}
-                onChange={(value) => onSettingChange('spatial', value)}
-              />
-            </View>
+            </Panel>
           </View>
-          <PlaybackControl
-            icon="waves"
-            status={ambientPlaying ? 'Soundscape playing' : 'Soundscape ready'}
-            label={ambientPlaying ? 'Pause ambient' : 'Generate ambient'}
-            isPlaying={ambientPlaying}
-            audioReady={audioReady}
-            onPress={onToggleAmbient}
-          />
-        </Panel>
+        </View>
+        <CompositionControls twoColumns={twoColumns} />
 
-        <Panel title="Noise colour" icon="noise" compact>
-          <Text style={styles.sectionNote}>
-            Pick a steady noise or a natural texture.
-          </Text>
-          <View style={styles.noiseGrid}>
-            {NOISE_TYPES.map((noise) => (
-              <NoiseChoice
-                key={noise.id}
-                noise={noise}
-                icon={noiseIcons[noise.id]}
-                selected={settings.noise === noise.id}
-                onPress={() => onSettingChange('noise', noise.id)}
-              />
-            ))}
-          </View>
-          <PlaybackControl
-            icon={noiseIcons[settings.noise]}
-            status={t('{{noise}} noise {{status}}',{noise:t(capitalize(settings.noise)),status:t(noisePlaying?'Playing':'Ready')})}
-            label={noisePlaying ? 'Pause noise' : 'Play noise'}
-            isPlaying={noisePlaying}
-            audioReady={audioReady}
-            onPress={onToggleNoise}
-          />
-        </Panel>
-
-        <Panel title="Layer balance" icon="balance" compact>
-          <Text style={styles.sectionNote}>
-            Set each layer while it plays alone or alongside the others.
-          </Text>
-          <LayerBalanceControls settings={settings} onChange={onSettingChange} />
-        </Panel>
         <View style={styles.footerLinks}>
         <MotionPressable accessibilityRole="button" accessibilityLabel="Replay quick tour" onPress={openTutorial} style={styles.tourLink}>
           <Text style={[styles.tourLinkText, { color:colors.muted }]}>Quick tour</Text>

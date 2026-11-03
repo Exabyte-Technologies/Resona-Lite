@@ -1,3 +1,4 @@
+import { tabletModalOrientations } from '../layout';
 import { Modal, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LANGUAGES, LocalizedText as Text, useLanguage, type Language } from '../i18n';
@@ -9,7 +10,7 @@ import Icon from './Icon';
 export default function LanguagePicker({ visible, firstLaunch=false, onContinue, onClose }: { visible: boolean; firstLaunch?: boolean; onContinue:()=>void; onClose:()=>void }) {
   const { language,setLanguage,t,rtl }=useLanguage();
   const c=useThemeColors(), insets=useSafeAreaInsets(), reduceMotion=useReducedMotion();
-  return <Modal transparent visible={visible} animationType={reduceMotion?'none':'fade'} onRequestClose={firstLaunch?()=>{}:onClose} statusBarTranslucent>
+  return <Modal supportedOrientations={tabletModalOrientations} transparent visible={visible} animationType={reduceMotion?'none':'fade'} onRequestClose={firstLaunch?()=>{}:onClose} statusBarTranslucent>
     <View style={[styles.overlay,{paddingTop:Math.max(insets.top,20),paddingBottom:Math.max(insets.bottom,20),direction:rtl?'rtl':'ltr'}]}>
       <BlurBackdrop intensity={30}/>
       <View accessibilityViewIsModal style={[styles.card,{backgroundColor:c.surface,borderColor:c.line}]}>

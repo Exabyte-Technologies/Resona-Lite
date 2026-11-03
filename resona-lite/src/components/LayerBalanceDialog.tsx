@@ -1,3 +1,4 @@
+import { tabletModalOrientations } from '../layout';
 import { LocalizedText as Text, useLanguage } from '../i18n';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,7 +13,7 @@ export default function LayerBalanceDialog({ visible, onClose, settings, onChang
   const {rtl}=useLanguage();
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
-  return <Modal visible={visible} transparent animationType={reduceMotion ? 'none' : 'fade'} onRequestClose={onClose} statusBarTranslucent>
+  return <Modal supportedOrientations={tabletModalOrientations} visible={visible} transparent animationType={reduceMotion ? 'none' : 'fade'} onRequestClose={onClose} statusBarTranslucent>
     <View style={[styles.overlay, { paddingTop:Math.max(insets.top,24), paddingBottom:Math.max(insets.bottom,24),direction:rtl?'rtl':'ltr' }]}>
       <BlurBackdrop intensity={22} />
       <Pressable accessible={false} onPress={onClose} style={StyleSheet.absoluteFill} />

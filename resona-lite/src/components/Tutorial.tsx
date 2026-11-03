@@ -1,3 +1,4 @@
+import { tabletModalOrientations } from '../layout';
 import { LocalizedText as Text, useLanguage } from '../i18n';
 import { useEffect, useMemo, useState } from 'react';
 import { AccessibilityInfo, Animated, Easing, Modal, ScrollView, StyleSheet, View } from 'react-native';
@@ -53,7 +54,7 @@ export default function Tutorial({ visible, showNotice, onClose }: { visible: bo
   const requestClose = () => {
     if (!noticeVisible) onClose();
   };
-  return <Modal visible={visible} transparent animationType={reduceMotion ? 'none' : 'fade'} onRequestClose={requestClose} statusBarTranslucent>
+  return <Modal supportedOrientations={tabletModalOrientations} visible={visible} transparent animationType={reduceMotion ? 'none' : 'fade'} onRequestClose={requestClose} statusBarTranslucent>
     <View style={[styles.backdrop, { paddingTop:Math.max(insets.top,20), paddingBottom:Math.max(insets.bottom,20),direction:rtl?'rtl':'ltr' }]}>
       <BlurBackdrop intensity={30} />
       <View style={styles.card} accessibilityViewIsModal>
