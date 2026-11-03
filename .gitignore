@@ -181,3 +181,4 @@ cython_debug/
 .cursorindexingignore
 
 Resona
+.DS_Store
