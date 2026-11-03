@@ -6,6 +6,8 @@ export default function HomeRoute() {
 
   return (
     <HomeScreen
+      timer={{deadline:player.sleepDeadline,remaining:player.sleepRemaining,finished:player.sleepFinished,onChange:player.setSleepTimer}}
+      controls={player.playbackControls}
       settings={player.settings}
       isPlaying={player.binauralPlaying || player.ambientPlaying}
       audioReady={player.audioReady}

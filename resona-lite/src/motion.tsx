@@ -1,3 +1,4 @@
+import { useLanguage } from './i18n';
 import { createContext, useContext, useEffect, useState, type PropsWithChildren } from 'react';
 import { AccessibilityInfo, Animated, Easing, Pressable, StyleSheet, type PressableProps } from 'react-native';
 
@@ -31,8 +32,9 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export function MotionPressable({ style, onPressIn, onPressOut, ...props }: PressableProps) {
   const [pressed, setPressed] = useState(false);
+  const {t}=useLanguage();
   const scale = useMotionValue(pressed ? 0.975 : 1, 160);
-  return <AnimatedPressable {...props}
+  return <AnimatedPressable {...props} accessibilityLabel={props.accessibilityLabel?t(props.accessibilityLabel):undefined} accessibilityHint={props.accessibilityHint?t(props.accessibilityHint):undefined}
     onPressIn={event => { setPressed(true); onPressIn?.(event); }}
     onPressOut={event => { setPressed(false); onPressOut?.(event); }}
     style={[typeof style === 'function' ? style({ pressed }) : style, { transform:[{ scale }] }]} />;

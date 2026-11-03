@@ -8,7 +8,7 @@ const root = path.join(__dirname, '../src/engine');
 const bundle = require(path.join(root, 'bundle.json'));
 
 function runtime({ bridge = false, model = false } = {}) {
-  let nextTimer = 0;
+  let nextTimer = 0, wallTime = 100000;
   const timers = new Map(), listeners = new Map(), messages = [], nodes = [];
   const param = value => ({ value, calls:[], cancelScheduledValues(t) { this.calls.push(['cancel',t]); }, setValueAtTime(v,t) { this.value=v; this.calls.push(['set',v,t]); }, setTargetAtTime(v,t,d) { this.value=v; this.calls.push(['target',v,t,d]); }, linearRampToValueAtTime(v,t) { this.value=v; this.calls.push(['linear',v,t]); }, exponentialRampToValueAtTime(v,t) { this.value=v; this.calls.push(['exponential',v,t]); } });
   class Node {
@@ -27,7 +27,7 @@ function runtime({ bridge = false, model = false } = {}) {
   for (const kind of ['Gain','Oscillator','ChannelMerger','BiquadFilter','BufferSource','StereoPanner','Delay','WaveShaper','DynamicsCompressor','Convolver','Analyser']) AudioContext.prototype[`create${kind}`]=()=>new Node(kind);
   let seed=71;
   const math=Object.create(Math); math.random=()=>((seed=seed*16807%2147483647)-1)/2147483646;
-  const sandbox={ Float32Array,Uint8Array,ArrayBuffer,Math:math,console,AudioContext,
+  const sandbox={ Date:class extends Date { static now(){return wallTime;} }, Float32Array,Uint8Array,ArrayBuffer,Math:math,console,AudioContext,
     CustomEvent:class { constructor(type,opts) { this.type=type; this.detail=opts?.detail; } },
     setInterval(fn,ms) { const id=++nextTimer; timers.set(id,{fn,ms,interval:true}); return id; },
     clearInterval(id) { timers.delete(id); },
@@ -45,7 +45,7 @@ function runtime({ bridge = false, model = false } = {}) {
   vm.runInContext(bundle.audio,sandbox);
   if (model || bridge) vm.runInContext(bundle.model,sandbox);
   if (bridge) vm.runInContext(bundle.bridge,sandbox);
-  return { window:sandbox, audio:sandbox.resonaAudio,timers,messages,nodes, tick(ms) { for (const [id,timer] of [...timers]) if (timer.ms===ms) { if (!timer.interval) timers.delete(id); timer.fn(); } } };
+  return { setNow:value=>{wallTime=value;}, window:sandbox, audio:sandbox.resonaAudio,timers,messages,nodes, tick(ms) { for (const [id,timer] of [...timers]) if (timer.ms===ms) { if (!timer.interval) timers.delete(id); timer.fn(); } } };
 }
 const close=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
 
@@ -143,4 +143,43 @@ test('continuous pipeline rotates A/B/C, and disabling it cancels future sets',a
   await r.window.resonaCommand({action:'continuous',args:[false]});
   r.tick(0); await new Promise(resolve=>setImmediate(resolve));
   assert.equal(r.messages.at(-1).pipeline.enabled,false);
+});
+
+
+test('sleep deadline stops every track and chord clock before resuming a suspended app',async()=>{
+ const r=runtime({bridge:true});await r.window.resonaCommand({action:'playSession'});r.audio.startNoise();r.audio.setChordProgression(['C','G'],4);
+ await r.window.resonaCommand({action:'sleepTimer',args:[160000]});await r.window.resonaCommand({action:'suspend'});r.setNow(170000);
+ await r.window.resonaCommand({action:'resume'});
+ assert.equal(r.audio.playing,false);assert.equal(r.audio.ambientPlaying,false);assert.equal(r.audio.noisePlaying,false);assert.equal(r.audio.chordProgressionPlaying,false);assert.equal(r.audio.chordTimer,null);
+ const state=r.messages.filter(m=>m.type==='state').at(-1);assert.equal(state.pipeline.enabled,false);
+ assert.equal(r.messages.filter(m=>m.type==='error').length,0);
+});
+test('stop cancels a delayed noise restart and remote play is idempotent',async()=>{
+ const r=runtime({bridge:true});await r.window.resonaCommand({action:'playSession'});const oscillator=r.audio.left;
+ await r.window.resonaCommand({action:'playSession'});assert.equal(r.audio.left,oscillator);
+ r.audio.startNoise();await r.window.resonaCommand({action:'setNoise',args:['rain']});await r.window.resonaCommand({action:'stopAll'});r.tick(850);
+ assert.equal(r.audio.noisePlaying,false);assert.equal(r.audio.playing,false);assert.equal(r.audio.ambientPlaying,false);
+ assert.equal(r.messages.filter(m=>m.type==='error').length,0);
+});
+test('remote pause preserves the original graph and freezes chords until play resumes',async()=>{
+ const r=runtime({bridge:true});
+ await r.window.resonaCommand({action:'playSession'});
+ r.audio.setChordProgression(['C','G'],4);
+ const oscillator=r.audio.left, voices=r.audio.ambientVoices;
+ await r.window.resonaCommand({action:'pauseAll'});
+ assert.equal(r.audio.context.state,'suspended');
+ assert.equal(r.messages.at(-1).paused,true);
+ assert.equal(r.messages.at(-1).playing,false);
+ r.tick(4000);
+ assert.equal(r.audio.chordProgressionIndex,0);
+ await r.window.resonaCommand({action:'playSession'});
+ assert.equal(r.audio.context.state,'running');
+ assert.equal(r.audio.left,oscillator);
+ assert.equal(r.audio.ambientVoices,voices);
+ r.tick(4000);
+ assert.equal(r.audio.chordProgressionIndex,1);
+ assert.equal(r.messages.at(-1).paused,false);
+});
+test('cancelled sleep timer does not stop a later session',async()=>{
+ const r=runtime({bridge:true});await r.window.resonaCommand({action:'sleepTimer',args:[160000]});await r.window.resonaCommand({action:'sleepTimer',args:[null]});r.setNow(170000);await r.window.resonaCommand({action:'playSession'});await r.window.resonaCommand({action:'resume'});assert.ok(r.audio.playing&&r.audio.ambientPlaying);
 });

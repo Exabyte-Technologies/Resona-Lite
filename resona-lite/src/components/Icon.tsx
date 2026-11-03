@@ -2,6 +2,7 @@ import { StyleSheet, View } from 'react-native';
 import { useThemeColors } from '../theme';
 
 export type IconName =
+  | 'language'
   | 'home'
   | 'tune'
   | 'waves'
@@ -31,6 +32,12 @@ export default function Icon({ name, color, size = 22 }: Props) {
     backgroundColor: stroke,
     borderRadius: scaled(2),
   };
+
+  if (name === 'language') return <View accessible={false} style={{width:size,height:size,alignItems:'center',justifyContent:'center'}}>
+    <View style={{width:size*0.82,height:size*0.82,borderRadius:size/2,borderWidth:1.4,borderColor:stroke}}/>
+    <View style={{position:'absolute',width:size*0.38,height:size*0.82,borderRadius:size/2,borderWidth:1.2,borderColor:stroke}}/>
+    <View style={{position:'absolute',width:size*0.82,height:1.2,backgroundColor:stroke}}/>
+  </View>;
 
   if (name === 'home') {
     return (

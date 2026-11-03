@@ -1,5 +1,6 @@
+import { LocalizedText as Text, useLanguage } from '../i18n';
 import { useEffect, useMemo, useState } from 'react';
-import { AccessibilityInfo, Animated, Easing, Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, Animated, Easing, Modal, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon, { type IconName } from './Icon';
 import BlurBackdrop from './BlurBackdrop';
@@ -13,21 +14,24 @@ const steps = [
   { eyebrow:'Let the harmony unfold', title:'Explore living chords', description:'In Advanced, find Chord progression and tap Generate & apply. Starting chords are optional. Try C Amin F G, then turn on Continuous sets for evolving harmony.', hint:'The chord model runs on your device. Replay this tour any time using Quick tour at the bottom of Advanced.', icon:'layers' },
 ] as const;
 
-export default function Tutorial({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+export default function Tutorial({ visible, showNotice, onClose }: { visible: boolean; showNotice: boolean; onClose: () => void }) {
   const colors = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
   const [step, setStep] = useState(0);
+  const [noticeDismissed, setNoticeDismissed] = useState(false);
+  const noticeVisible = showNotice && !noticeDismissed;
   const [transitioning, setTransitioning] = useState(false);
   const [progress] = useState(() => new Animated.Value(1));
   useEffect(() => () => progress.stopAnimation(), [progress]);
   const current = steps[step];
+  const {t,rtl}=useLanguage();
   const go = (next: number) => {
     if (transitioning || next === step) return;
     const update = () => {
       setStep(next);
-      AccessibilityInfo.announceForAccessibility(`Step ${next + 1} of ${steps.length}. ${steps[next].title}`);
+      AccessibilityInfo.announceForAccessibility(t('Step {{current}} of {{total}}',{current:next+1,total:steps.length})+'. '+t(steps[next].title));
     };
     if (reduceMotion) { update(); return; }
     setTransitioning(true);
@@ -37,35 +41,52 @@ export default function Tutorial({ visible, onClose }: { visible: boolean; onClo
       Animated.timing(progress, { toValue:1, duration:260, easing:Easing.out(Easing.cubic), useNativeDriver:true }).start(() => setTransitioning(false));
     });
   };
-  return <Modal visible={visible} transparent animationType={reduceMotion ? 'none' : 'fade'} onRequestClose={onClose} statusBarTranslucent>
-    <View style={[styles.backdrop, { paddingTop:Math.max(insets.top,20), paddingBottom:Math.max(insets.bottom,20) }]}>
+  const requestClose = () => {
+    if (!noticeVisible) onClose();
+  };
+  return <Modal visible={visible} transparent animationType={reduceMotion ? 'none' : 'fade'} onRequestClose={requestClose} statusBarTranslucent>
+    <View style={[styles.backdrop, { paddingTop:Math.max(insets.top,20), paddingBottom:Math.max(insets.bottom,20),direction:rtl?'rtl':'ltr' }]}>
       <BlurBackdrop intensity={30} />
       <View style={styles.card} accessibilityViewIsModal>
         <View style={styles.topBar}>
           <Text style={styles.brand}>resona<Text style={{ color:colors.accent }}>.</Text><Text style={styles.lite}>  LITE</Text></Text>
-          <MotionPressable accessibilityRole="button" accessibilityLabel="Skip tutorial" onPress={onClose} style={styles.textButton}><Text style={styles.secondaryText}>Skip tour</Text></MotionPressable>
+          {!noticeVisible && <MotionPressable accessibilityRole="button" accessibilityLabel="Skip tutorial" onPress={onClose} style={styles.textButton}><Text style={styles.secondaryText}>Skip tour</Text></MotionPressable>}
         </View>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.body}>
-          <Animated.View style={{ opacity:progress, transform:[{ translateY:progress.interpolate({ inputRange:[0,1], outputRange:[10,0] }) }] }}>
-            <TutorialArtwork step={step} icon={current.icon} />
-            <Text style={styles.eyebrow}>{current.eyebrow}</Text>
-            <Text accessibilityRole="header" style={styles.title}>{current.title}</Text>
-            <Text style={styles.description}>{current.description}</Text>
-            <View style={styles.hint}><View style={styles.hintDot} /><Text style={styles.hintText}>{current.hint}</Text></View>
-          </Animated.View>
-        </ScrollView>
-        <View style={styles.footer}>
-          <View style={styles.progressRow}>
-            <Text style={styles.stepText}>Step {step + 1} of {steps.length}</Text>
-            <View style={styles.dots}>
-              {steps.map((item,index) => <View key={item.title} accessible={false} style={styles.dotTarget}><View style={[styles.dot,index === step && styles.dotActive]} /></View>)}
+        {noticeVisible ? <>
+          <ScrollView contentContainerStyle={styles.noticeBody}>
+            <Text accessibilityRole="header" style={styles.title}>Health notice</Text>
+            <Text style={styles.description}>Resona Lite is for relaxation. It does not provide medical advice or diagnose, treat, or cure any health condition. It is not a substitute for professional care.</Text>
+          </ScrollView>
+          <View style={styles.footer}>
+            <View style={styles.actions}>
+              <MotionPressable accessibilityRole="button" onPress={() => setNoticeDismissed(true)} style={styles.nextButton}>
+                <Text style={styles.nextText}>Continue</Text>
+              </MotionPressable>
             </View>
           </View>
-          <View style={styles.actions}>
-            {step > 0 ? <MotionPressable accessibilityRole="button" disabled={transitioning} onPress={() => go(step-1)} style={styles.backButton}><Text style={styles.secondaryText}>Back</Text></MotionPressable> : null}
-            <MotionPressable accessibilityRole="button" disabled={transitioning} onPress={() => step === steps.length-1 ? onClose() : go(step+1)} style={[styles.nextButton, transitioning && { opacity:0.6 }]}><Text style={styles.nextText}>{step === steps.length-1 ? 'Let’s begin' : 'Continue'}<Text>  →</Text></Text></MotionPressable>
+        </> : <>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.body}>
+            <Animated.View style={{ opacity:progress, transform:[{ translateY:progress.interpolate({ inputRange:[0,1], outputRange:[10,0] }) }] }}>
+              <TutorialArtwork step={step} icon={current.icon} />
+              <Text style={styles.eyebrow}>{current.eyebrow}</Text>
+              <Text accessibilityRole="header" style={styles.title}>{current.title}</Text>
+              <Text style={styles.description}>{current.description}</Text>
+              <View style={styles.hint}><View style={styles.hintDot} /><Text style={styles.hintText}>{current.hint}</Text></View>
+            </Animated.View>
+          </ScrollView>
+          <View style={styles.footer}>
+            <View style={styles.progressRow}>
+              <Text style={styles.stepText}>{t('Step {{current}} of {{total}}',{current:step+1,total:steps.length})}</Text>
+              <View style={styles.dots}>
+                {steps.map((item,index) => <View key={item.title} accessible={false} style={styles.dotTarget}><View style={[styles.dot,index === step && styles.dotActive]} /></View>)}
+              </View>
+            </View>
+            <View style={styles.actions}>
+              {step > 0 ? <MotionPressable accessibilityRole="button" disabled={transitioning} onPress={() => go(step-1)} style={styles.backButton}><Text style={styles.secondaryText}>Back</Text></MotionPressable> : null}
+              <MotionPressable accessibilityRole="button" disabled={transitioning} onPress={() => step === steps.length-1 ? onClose() : go(step+1)} style={[styles.nextButton, transitioning && { opacity:0.6 }]}><Text style={styles.nextText}>{step === steps.length-1 ? 'Let’s begin' : 'Continue'}<Text>  →</Text></Text></MotionPressable>
+            </View>
           </View>
-        </View>
+        </>}
       </View>
     </View>
   </Modal>;
@@ -93,6 +114,7 @@ function createStyles(c: ThemeColors) {
     lite:{ fontSize:10, letterSpacing:2, fontWeight:'500', color:c.dim },
     textButton:{ minHeight:44, paddingHorizontal:4, justifyContent:'center' },
     body:{ paddingHorizontal:24, paddingBottom:8 },
+    noticeBody:{ paddingHorizontal:24, paddingTop:20, paddingBottom:16 },
     artwork:{ height:170, alignItems:'center', justifyContent:'center', marginBottom:20, marginTop:8, backgroundColor:c.surfaceSubtle, borderRadius:22, overflow:'hidden' },
     orbitOuter:{ position:'absolute', width:156, height:156, top:-15, borderRadius:80, borderWidth:1, borderColor:c.line },
     orbitInner:{ position:'absolute', width:114, height:114, top:6, borderRadius:60, borderWidth:1, borderColor:c.selectedBorder, opacity:0.35 },

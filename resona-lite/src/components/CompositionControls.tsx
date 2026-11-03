@@ -1,6 +1,7 @@
+import { LocalizedText as Text, useLanguage } from '../i18n';
 import { MotionPressable, SelectionWash } from '../motion';
 import { useState } from 'react';
-import { StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Switch, TextInput, View } from 'react-native';
 import Panel from './Panel';
 import RangeControl from './RangeControl';
 import { usePlayer } from '../player-context';
@@ -19,6 +20,7 @@ function Choice({ label, selected = false, disabled = false, onPress }: { label:
 export function BinauralControls() {
   const { settings:s, updateSetting:set, engineState } = usePlayer();
   const colors = useThemeColors();
+  const {t}=useLanguage();
   const carrier = engineState?.config.carrier ?? s.droneFrequency;
   const left = s.binauralMode === 'difference' ? carrier - s.beatHz / 2 : s.leftFrequency;
   const right = s.binauralMode === 'difference' ? carrier + s.beatHz / 2 : s.rightFrequency;
@@ -27,20 +29,19 @@ export function BinauralControls() {
       <Choice label="Frequency difference" selected={s.binauralMode === 'difference'} onPress={() => set('binauralMode','difference')} />
       <Choice label="Individual ears" selected={s.binauralMode === 'individual'} onPress={() => set('binauralMode','individual')} />
     </View>
-    <Text style={{ color:colors.muted }}>Left {left.toFixed(2)} Hz · Right {right.toFixed(2)} Hz</Text>
+    <Text style={{ color:colors.muted }}>{t('Left {{left}} Hz · Right {{right}} Hz',{left:left.toFixed(2),right:right.toFixed(2)})}</Text>
     {s.binauralMode === 'difference' ? <RangeControl compact title="Beat difference" minimum={0.1} maximum={100} step={0.1} value={s.beatHz} unit=" Hz" onChange={v => set('beatHz',v)} /> : <>
       <RangeControl compact title="Left ear" minimum={40} maximum={400} step={0.1} value={s.leftFrequency} unit=" Hz" onChange={v => set('leftFrequency',v)} />
       <RangeControl compact title="Right ear" minimum={40} maximum={400} step={0.1} value={s.rightFrequency} unit=" Hz" onChange={v => set('rightFrequency',v)} />
     </>}
-    <Text style={{ color:colors.muted }}>Chord transition timing · 0 means instant. Manual tuning keeps its smooth glide.</Text>
-    <RangeControl compact title="Ambient chord transition" minimum={0} maximum={4} step={0.1} unit=" s" value={s.chordTransition} onChange={v => set('chordTransition',v)} />
-    <RangeControl compact title="Binaural chord transition" minimum={0} maximum={4} step={0.1} unit=" s" value={s.binauralChordTransition} onChange={v => set('binauralChordTransition',v)} />
+
   </Panel>;
 }
 
 export function CompositionControls() {
   const { settings:s, updateSetting:set, engineState:e, command, generateChords, audioReady } = usePlayer();
   const colors = useThemeColors();
+  const {t}=useLanguage();
   const [seed, setSeed] = useState('');
   const [length, setLength] = useState(8);
   const [duration, setDuration] = useState(4);
@@ -67,13 +68,16 @@ export function CompositionControls() {
     <Panel title="Chord progression" icon="layers" compact>
       <Text style={{ color:colors.muted }}>The original offline chord model. Starting chords are optional; generation stays on your phone.</Text>
       <Text style={{ color:colors.ink }}>Starting chords</Text>
-      <TextInput accessibilityLabel="Starting chords" placeholder="C Amin F G" placeholderTextColor={colors.dim} autoCapitalize="none" autoCorrect={false} value={seed} onChangeText={setSeed} style={[styles.input,{ color:colors.ink, borderColor:colors.line, backgroundColor:colors.surfaceSubtle }]} />
+      <TextInput accessibilityLabel={t("Starting chords")} placeholder="C Amin F G" placeholderTextColor={colors.dim} autoCapitalize="none" autoCorrect={false} value={seed} onChangeText={setSeed} style={[styles.input,{ color:colors.ink, borderColor:colors.line, backgroundColor:colors.surfaceSubtle }]} />
       <RangeControl compact title="Progression length" minimum={2} maximum={32} value={length} onChange={setLength} />
       <RangeControl compact title="Seconds per chord" minimum={2} maximum={120} value={duration} unit=" s" onChange={setDuration} />
+      <Text style={{ color:colors.muted }}>Chord transition timing · 0 means instant. Manual tuning keeps its smooth glide.</Text>
+      <RangeControl compact title="Ambient chord transition" minimum={0} maximum={4} step={0.1} unit=" s" value={s.chordTransition} onChange={v => set('chordTransition',v)} />
+      <RangeControl compact title="Binaural chord transition" minimum={0} maximum={4} step={0.1} unit=" s" value={s.binauralChordTransition} onChange={v => set('binauralChordTransition',v)} />
       <RangeControl compact title="Creativity" minimum={0.1} maximum={2} step={0.1} value={temperature} onChange={setTemperature} />
       <RangeControl compact title="Top choices" minimum={1} maximum={100} value={topK} onChange={setTopK} />
-      <View style={styles.switchRow}><Text style={{ color:colors.ink }}>Predictable mode</Text><Switch accessibilityLabel="Predictable mode" value={greedy} onValueChange={setGreedy} /></View>
-      <View style={styles.switchRow}><Text style={{ color:colors.ink }}>Continuous sets</Text><Switch accessibilityLabel="Continuous sets" value={continuous} onValueChange={value => { setContinuous(value); command('continuous',value); }} /></View>
+      <View style={styles.switchRow}><Text style={{ color:colors.ink }}>Predictable mode</Text><Switch accessibilityLabel={t("Predictable mode")} value={greedy} onValueChange={setGreedy} /></View>
+      <View style={styles.switchRow}><Text style={{ color:colors.ink }}>Continuous sets</Text><Switch accessibilityLabel={t("Continuous sets")} value={continuous} onValueChange={value => { setContinuous(value); command('continuous',value); }} /></View>
       {e?.pipeline.enabled ? <Text accessibilityLiveRegion="polite" style={{ color:colors.accent }}>Playing {e.pipeline.playing ?? '—'} · Ready {e.pipeline.ready.join(', ') || '—'} · Generating {e.pipeline.generating ?? '—'}</Text> : null}
       <View style={styles.row}>
         {chords.map((chord,index) => <Text key={index} style={[styles.chord,{ color:e?.chordProgressionIndex === index && s.tonalSource === 'generated' ? colors.accent : colors.muted, borderColor:colors.line }]}>{chord.replace(/([A-G])s/g,'$1♯')}</Text>)}

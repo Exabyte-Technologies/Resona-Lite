@@ -21,6 +21,7 @@ export default function AudioHost({ commandRef, onMessage }: AudioHostProps) {
         originWhitelist={['*']}
         javaScriptEnabled
         mediaPlaybackRequiresUserAction={false}
+        allowsAirPlayForMediaPlayback
         allowsInlineMediaPlayback
         onShouldStartLoadWithRequest={({ url }) => url === 'about:blank'}
         onMessage={({ nativeEvent }) => {

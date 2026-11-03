@@ -1,8 +1,9 @@
-import { useTutorial } from '../tutorial-context';
+import { LocalizedText as Text, useLanguage } from '../i18n';
+import { useTutorial, useLanguagePicker } from '../tutorial-context';
 import LayerBalanceControls from '../components/LayerBalanceControls';
 import { MotionPressable, SelectionWash } from '../motion';
 import { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import AudioErrorNotice from '../components/AudioErrorNotice';
 import Icon, { type IconName } from '../components/Icon';
 import Panel from '../components/Panel';
@@ -67,6 +68,8 @@ export default function AdvancedScreen({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [focusedBand, setFocusedBand] = useState<number | null>(null);
   const openTutorial = useTutorial();
+  const openLanguage=useLanguagePicker();
+  const {t}=useLanguage();
 
   return (
     <>
@@ -237,7 +240,7 @@ export default function AdvancedScreen({
           </View>
           <PlaybackControl
             icon={noiseIcons[settings.noise]}
-            status={`${capitalize(settings.noise)} noise ${noisePlaying ? 'playing' : 'ready'}`}
+            status={t('{{noise}} noise {{status}}',{noise:t(capitalize(settings.noise)),status:t(noisePlaying?'Playing':'Ready')})}
             label={noisePlaying ? 'Pause noise' : 'Play noise'}
             isPlaying={noisePlaying}
             audioReady={audioReady}
@@ -251,9 +254,14 @@ export default function AdvancedScreen({
           </Text>
           <LayerBalanceControls settings={settings} onChange={onSettingChange} />
         </Panel>
+        <View style={styles.footerLinks}>
         <MotionPressable accessibilityRole="button" accessibilityLabel="Replay quick tour" onPress={openTutorial} style={styles.tourLink}>
-          <Text style={[styles.tourLinkText, { color:colors.muted }]}>Quick tour</Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[styles.tourLinkText, { color:colors.muted }]}>Quick tour</Text>
         </MotionPressable>
+        <MotionPressable accessibilityRole="button" onPress={openLanguage} style={styles.tourLink}>
+          <Icon name="language" size={16}/><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[styles.tourLinkText,{color:colors.muted}]}>Change language</Text>
+        </MotionPressable>
+        </View>
       </ScrollView>
     </>
   );
@@ -350,7 +358,7 @@ function NoiseChoice({
         <Text style={[styles.noiseName, selected && styles.selectedText]}>
           {capitalize(noise.id)}
         </Text>
-        <Text style={styles.noiseDescription}>{noise.description.replace(' · ', ', ')}</Text>
+        <Text style={styles.noiseDescription}>{noise.description}</Text>
       </View>
     </MotionPressable>
   );
@@ -362,8 +370,9 @@ function capitalize(noise: NoiseType) {
 
 function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
-    tourLink:{ minHeight:44, alignSelf:'center', justifyContent:'center', paddingHorizontal:16, marginTop:8 },
-    tourLinkText:{ fontFamily:fonts.body, fontSize:13, textDecorationLine:'underline' },
+    footerLinks:{flexDirection:'row',alignItems:'center',justifyContent:'center',gap:16,marginTop:8},
+    tourLink:{ flex:1, minHeight:44, flexDirection:'row',gap:6,alignItems:'center', justifyContent:'center' },
+    tourLinkText:{ fontFamily:fonts.body, fontSize:12,flexShrink:1, textDecorationLine:'underline' },
     content: {
       paddingHorizontal: spacing.page,
       paddingTop: spacing.sm,

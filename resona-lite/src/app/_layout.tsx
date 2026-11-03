@@ -1,9 +1,13 @@
+import { HomeQuoteProvider } from '../quotes';
+import { LanguageProvider, useLanguage } from '../i18n';
+import { StartupProvider } from '../startup';
+import Brand from '../components/Brand';
 import { Tabs } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Easing, StyleSheet, Text, View, useColorScheme } from 'react-native';
+import { Easing, StyleSheet, View, useColorScheme } from 'react-native';
 import Icon from '../components/Icon';
 import { PlayerProvider } from '../player-context';
-import { fonts, useThemeColors } from '../theme';
+import { useThemeColors } from '../theme';
 import { MotionProvider, useReducedMotion } from '../motion';
 import { TutorialProvider } from '../tutorial-context';
 import { BlurBackdropProvider } from '../components/BlurBackdrop';
@@ -12,6 +16,9 @@ export default function RootLayout() {
   const scheme = useColorScheme() ?? 'light';
 
   return (
+    <LanguageProvider>
+    <HomeQuoteProvider>
+    <StartupProvider>
     <MotionProvider>
       <BlurBackdropProvider>
         <TutorialProvider>
@@ -21,25 +28,25 @@ export default function RootLayout() {
         </TutorialProvider>
       </BlurBackdropProvider>
     </MotionProvider>
+    </StartupProvider>
+    </HomeQuoteProvider>
+    </LanguageProvider>
   );
 }
 
 function AppTabs({ isDark }: { isDark: boolean }) {
   const colors = useThemeColors();
   const reduceMotion = useReducedMotion();
+  const {t,rtl}=useLanguage();
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background,direction:rtl?'rtl':'ltr' }]}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <Tabs
         screenOptions={{
           animation: reduceMotion ? 'none' : 'fade',
           transitionSpec: { animation:'timing', config:{ duration:260, easing:Easing.inOut(Easing.cubic) } },
-          headerTitle: () => (
-            <Text accessibilityLabel="Resona" style={[styles.logo, { color: colors.ink }]}>
-              resona<Text style={{ color: colors.accent }}>.</Text>
-            </Text>
-          ),
+          headerTitle: () => <Brand/>,
           headerTitleAlign: 'left',
           headerStyle: { backgroundColor: colors.background },
           headerShadowVisible: false,
@@ -60,18 +67,18 @@ function AppTabs({ isDark }: { isDark: boolean }) {
         <Tabs.Screen
           name="index"
           options={{
-            title: 'Home',
-            tabBarLabel: 'Home',
-            tabBarAccessibilityLabel: 'Home',
+            title: t('Home'),
+            tabBarLabel: t('Home'),
+            tabBarAccessibilityLabel: t('Home'),
             tabBarIcon: ({ color }) => <Icon name="home" color={String(color)} size={21} />,
           }}
         />
         <Tabs.Screen
           name="advanced"
           options={{
-            title: 'Advanced',
-            tabBarLabel: 'Advanced',
-            tabBarAccessibilityLabel: 'Advanced controls',
+            title: t('Advanced'),
+            tabBarLabel: t('Advanced'),
+            tabBarAccessibilityLabel: t('Advanced controls'),
             tabBarIcon: ({ color }) => <Icon name="tune" color={String(color)} size={21} />,
           }}
         />
@@ -84,12 +91,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  logo: {
-    fontFamily: fonts.body,
-    fontSize: 24,
-    fontWeight: '700',
-    letterSpacing: -1.2,
-  },
   tabBar: {
     height: 72,
     paddingTop: 4,
@@ -100,7 +101,6 @@ const styles = StyleSheet.create({
     paddingTop: 2,
   },
   tabLabel: {
-    fontFamily: fonts.body,
     fontSize: 12,
     fontWeight: '500',
   },

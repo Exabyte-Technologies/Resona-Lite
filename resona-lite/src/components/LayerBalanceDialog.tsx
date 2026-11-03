@@ -1,4 +1,5 @@
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { LocalizedText as Text, useLanguage } from '../i18n';
+import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BlurBackdrop from './BlurBackdrop';
 import Icon from './Icon';
@@ -8,10 +9,11 @@ import { fonts, useThemeColors } from '../theme';
 
 export default function LayerBalanceDialog({ visible, onClose, settings, onChange }: LayerBalanceProps & { visible: boolean; onClose: () => void }) {
   const colors = useThemeColors();
+  const {rtl}=useLanguage();
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
   return <Modal visible={visible} transparent animationType={reduceMotion ? 'none' : 'fade'} onRequestClose={onClose} statusBarTranslucent>
-    <View style={[styles.overlay, { paddingTop:Math.max(insets.top,24), paddingBottom:Math.max(insets.bottom,24) }]}>
+    <View style={[styles.overlay, { paddingTop:Math.max(insets.top,24), paddingBottom:Math.max(insets.bottom,24),direction:rtl?'rtl':'ltr' }]}>
       <BlurBackdrop intensity={22} />
       <Pressable accessible={false} onPress={onClose} style={StyleSheet.absoluteFill} />
       <View accessibilityViewIsModal style={[styles.card, { backgroundColor:colors.surface, borderColor:colors.line }]}>

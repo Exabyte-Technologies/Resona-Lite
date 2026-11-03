@@ -5,13 +5,26 @@
     "scheme": "resona-lite",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/resona-icon-padded.png",
+    "icon": "./assets/resona-icon-gradient.png",
     "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "com.resona.lite",
       "supportsTablet": false,
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleLocalizations": [
+          "en",
+          "zh-Hans",
+          "zh-Hant",
+          "es",
+          "hi",
+          "ar",
+          "pt",
+          "fr",
+          "ru",
+          "ja"
+        ],
+        "CFBundleDevelopmentRegion": "en"
       }
     },
     "android": {
@@ -22,8 +35,8 @@
         "android.permission.WRITE_EXTERNAL_STORAGE"
       ],
       "adaptiveIcon": {
-        "backgroundColor": "#f4f7f3",
-        "foregroundImage": "./assets/resona-icon-padded.png"
+        "backgroundColor": "#101a1c",
+        "foregroundImage": "./assets/resona-icon-gradient.png"
       },
       "predictiveBackGestureEnabled": false,
       "permissions": [
@@ -31,7 +44,7 @@
       ]
     },
     "web": {
-      "favicon": "./assets/resona-icon-padded.png"
+      "favicon": "./assets/resona-icon-gradient.png"
     },
     "plugins": [
       "expo-router",
@@ -42,7 +55,33 @@
           "recordAudioAndroid": false,
           "enableBackgroundPlayback": false
         }
-      ]
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#101a1c",
+          "image": "./assets/resona-icon-gradient.png",
+          "imageWidth": 180,
+          "resizeMode": "contain"
+        }
+      ],
+      [
+        "expo-widgets",
+        {
+          "groupIdentifier": "group.com.resona.lite",
+          "enablePushNotifications": false,
+          "bundleIdentifier": "com.resona.lite.ExpoWidgetsTarget"
+        }
+      ],
+      "expo-asset",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#83c9bd"
+        }
+      ],
+      "./plugins/with-resona-playback"
     ],
     "extra": {
       "router": {

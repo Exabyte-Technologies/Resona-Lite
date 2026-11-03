@@ -1,5 +1,6 @@
+import { LocalizedText as Text } from '../i18n';
 import type { PropsWithChildren } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Icon, { type IconName } from './Icon';
 import { fonts, spacing, useThemeColors } from '../theme';
 

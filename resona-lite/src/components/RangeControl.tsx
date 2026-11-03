@@ -1,6 +1,7 @@
+import { LocalizedText as Text, useLanguage } from '../i18n';
 import { useState } from 'react';
 import Slider from '@react-native-community/slider';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { fonts, spacing, useThemeColors } from '../theme';
 
 type Props = {
@@ -29,6 +30,7 @@ export default function RangeControl({
   onChange,
 }: Props) {
   const colors = useThemeColors();
+  const {t}=useLanguage();
   const [draftValue, setDraftValue] = useState(value);
   const [isSliding, setIsSliding] = useState(false);
   const displayedValue = isSliding ? draftValue : value;
@@ -72,7 +74,7 @@ export default function RangeControl({
       </View>
       <View style={[styles.sliderInset, grid && styles.gridSliderInset]}>
         <Slider
-          accessibilityLabel={title}
+          accessibilityLabel={t(title)}
           minimumValue={minimum}
           maximumValue={maximum}
           step={step}

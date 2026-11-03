@@ -24,7 +24,7 @@ export type EngineState = {
       chordProgression: string[]; chordDuration: number; chordTransition: number; binauralChordTransition: number;
     };
   };
-  playing: boolean; ambientPlaying: boolean; noisePlaying: boolean;
+  paused: boolean; playing: boolean; ambientPlaying: boolean; noisePlaying: boolean;
   chordProgressionPlaying: boolean; chordProgressionPaused: boolean; chordProgressionIndex: number;
   generating: boolean; chordStatus: string;
   pipeline: { enabled: boolean; playing: string | null; ready: string[]; generating: string | null };

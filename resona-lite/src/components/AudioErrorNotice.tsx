@@ -1,4 +1,5 @@
-import { StyleSheet, Text } from 'react-native';
+import { LocalizedText as Text } from '../i18n';
+import { StyleSheet } from 'react-native';
 import { fonts, spacing, useThemeColors } from '../theme';
 
 export default function AudioErrorNotice({ message }: { message: string }) {

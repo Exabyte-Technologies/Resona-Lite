@@ -1,11 +1,17 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type PropsWithChildren } from 'react';
 import { AppState } from 'react-native';
-import { setAudioModeAsync } from 'expo-audio';
+import { activatePlayback } from './playback/runtime';
 import AudioHost from './engine/AudioHost';
 import type { AudioCommand, ChordOptions, EngineMessage, EngineState } from './engine/types';
+import { timerDeadline, timerExpired, timerRemaining } from './sleep-timer';
+import { usePlaybackControls } from './playback/usePlaybackControls';
+import type { PlaybackAction } from './playback/types';
 import { DEFAULT_SETTINGS, type SoundSettings } from './model';
 
 type PlayerContextValue = {
+  sleepDeadline: number | null; sleepRemaining: number; sleepFinished: boolean;
+  setSleepTimer: (minutes: number | null) => void;
+  playbackControls: ReturnType<typeof usePlaybackControls>;
   settings: SoundSettings;
   binauralPlaying: boolean; ambientPlaying: boolean; noisePlaying: boolean;
   audioReady: boolean; audioError: string | null; engineState: EngineState | null;
@@ -22,22 +28,52 @@ export function PlayerProvider({ children }: PropsWithChildren) {
   const [engineState, setEngineState] = useState<EngineState | null>(null);
   const [audioReady, setAudioReady] = useState(false);
   const [audioError, setAudioError] = useState<string | null>(null);
+  const [sleepDeadline,setDeadline] = useState<number|null>(null);
+  const [sleepRemaining,setRemaining] = useState(0);
+  const [sleepFinished,setSleepFinished] = useState(false);
+  const deadlineRef=useRef<number|null>(null);
+  const [controlsSession,setControlsSession]=useState(false);
+  const pendingAction=useRef<{action:PlaybackAction;expired?:boolean}|null>(null);
+  const commandQueue=useRef<Promise<void>>(Promise.resolve());
   const commandRef = useRef<((command: AudioCommand) => void) | null>(null);
   const command = useCallback((action: string, ...args: unknown[]) => {
     setAudioError(null);
-    commandRef.current?.({ action, args });
+    commandQueue.current=commandQueue.current.then(async()=>{
+      if(['toggleSession','toggle','toggleAmbient','toggleNoise','playSession','generate','toggleChordProgression','replayChordProgression'].includes(action))await activatePlayback();
+      commandRef.current?.({action,args});
+    }).catch((error:unknown)=>setAudioError(error instanceof Error?error.message:String(error)));
   }, []);
+  const setSleepTimer=useCallback((minutes:number|null)=>{
+    const deadline=timerDeadline(minutes);deadlineRef.current=deadline;setDeadline(deadline);setRemaining(timerRemaining(deadline));setSleepFinished(false);command('sleepTimer',deadline);
+  },[command]);
+  const expireTimer=useCallback(()=>{
+    if(!timerExpired(deadlineRef.current))return false;
+    deadlineRef.current=null;setDeadline(null);setRemaining(0);setSleepFinished(true);setControlsSession(false);command('stopAll');return true;
+  },[command]);
+  useEffect(()=>{if(sleepDeadline===null)return;const tick=()=>{if(!expireTimer())setRemaining(timerRemaining(deadlineRef.current));};tick();const interval=setInterval(tick,1000);return()=>clearInterval(interval);},[sleepDeadline,expireTimer]);
+  const handleAction=useCallback((action:PlaybackAction,expired=false)=>{
+    if(!audioReady){pendingAction.current={action,expired};return;}
+    if(action==='extend'){setSleepTimer((Math.max(0,(deadlineRef.current??Date.now())-Date.now())/60000)+15);return;}
+    if(action==='stop'){setSleepTimer(null);setSleepFinished(expired);setControlsSession(false);command('stopAll');}
+    else {if(action==='play')setControlsSession(true);command(action==='play'?'playSession':'pauseAll');}
+  },[audioReady,command,setSleepTimer]);
+  useEffect(()=>{if(audioReady&&pendingAction.current){const event=pendingAction.current;pendingAction.current=null;handleAction(event.action,event.expired);}},[audioReady,handleAction]);
+  const anyPlaying=Boolean(engineState?.playing||engineState?.ambientPlaying||engineState?.noisePlaying);
+  const playbackControls=usePlaybackControls({playing:anyPlaying,mood:settings.mode[0].toUpperCase()+settings.mode.slice(1),deadline:sleepDeadline,onAction:handleAction,session:controlsSession});
   useEffect(() => {
-    setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true, interruptionMode: 'mixWithOthers', shouldPlayInBackground: false, shouldRouteThroughEarpiece: false })
-      .catch((error: unknown) => setAudioError(error instanceof Error ? error.message : String(error)));
-    const subscription = AppState.addEventListener('change', state => command(state === 'active' ? 'resume' : 'suspend'));
+    const subscription = AppState.addEventListener('change', state => {
+      // Leaving the foreground must not suspend an actively playing soundscape.
+      if(state==='active'){expireTimer();command('refresh');}
+    });
     return () => subscription.remove();
-  }, [command]);
+  }, [command,expireTimer]);
 
   const onMessage = useCallback((message: EngineMessage) => {
     if (message.type === 'ready') { setAudioReady(true); return; }
     if (message.type === 'error') { setAudioError(message.message); return; }
     setEngineState(message);
+    if(message.playing||message.ambientPlaying||message.noisePlaying){setControlsSession(true);setSleepFinished(false);}
+    else setControlsSession(message.paused);
     const c = message.config, a = c.ambient;
     setSettings({ mode:c.mode, masterVolume:c.master, beatHz:c.beat, droneFrequency:a.droneFrequency,
       binauralMode:c.binauralMode, leftFrequency:c.leftFrequency, rightFrequency:c.rightFrequency,
@@ -57,7 +93,7 @@ export function PlayerProvider({ children }: PropsWithChildren) {
     else command('setAmbient', key, value);
   }, [command]);
   return (
-    <PlayerContext.Provider value={{ settings, audioReady, audioError, engineState,
+    <PlayerContext.Provider value={{ sleepDeadline,sleepRemaining,sleepFinished,setSleepTimer,playbackControls,settings, audioReady, audioError, engineState,
       binauralPlaying:engineState?.playing ?? false, ambientPlaying:engineState?.ambientPlaying ?? false, noisePlaying:engineState?.noisePlaying ?? false,
       command, updateSetting, chooseMode:mode => command('applyMode', mode),
       toggleSession:() => command('toggleSession'), toggleBinaural:() => command('toggle'), toggleAmbient:() => command('toggleAmbient'), toggleNoise:() => command('toggleNoise'),

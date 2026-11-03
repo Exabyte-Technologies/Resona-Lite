@@ -1,10 +1,12 @@
+import { useHomeQuote } from '../quotes';
+import SleepTimer from '../components/SleepTimer';
+import { LocalizedText as Text } from '../i18n';
 import { useEffect, useMemo, useState } from 'react';
 import {
   Animated,
   Easing,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import type { Mode, SoundSettings } from '../model';
@@ -19,6 +21,8 @@ import { fonts, spacing, useThemeColors, type ThemeColors } from '../theme';
 import { MotionPressable, SelectionWash, useMotionValue, useReducedMotion } from '../motion';
 
 type Props = {
+  timer?: {deadline:number|null;remaining:number;finished:boolean;onChange:(minutes:number|null)=>void};
+  controls?: {supported:boolean;enabled:boolean;error:string|null;toggle:()=>void};
   settings: SoundSettings;
   isPlaying: boolean;
   audioReady: boolean;
@@ -38,6 +42,7 @@ const modeIcons: Record<Mode, IconName> = {
 
 export default function HomeScreen({
   settings,
+  timer, controls,
   isPlaying,
   audioReady,
   audioError,
@@ -46,6 +51,7 @@ export default function HomeScreen({
   onMasterVolumeChange,
   onLayerVolumeChange,
 }: Props) {
+  const { quote } = useHomeQuote();
   const colors = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [playFocused, setPlayFocused] = useState(false);
@@ -65,7 +71,7 @@ export default function HomeScreen({
             <View style={styles.eyebrowMark} />
             <Text style={styles.eyebrowText}>A little space to reset</Text>
           </View>
-          <Text style={styles.title}>Make room for quiet</Text>
+          <Text style={styles.title}>{quote}</Text>
           <Text style={styles.description}>
             Choose a listening mode and shape the sound around you.
           </Text>
@@ -172,6 +178,8 @@ export default function HomeScreen({
             })}
           </View>
         </Panel>
+        {timer?<SleepTimer {...timer}/>:null}
+        {controls?.supported?<View><MotionPressable accessibilityRole="button" onPress={controls.toggle} style={{minHeight:44,justifyContent:'center',alignItems:'center'}}><Text style={{color:colors.accent,textDecorationLine:'underline',fontSize:13}}>{controls.enabled?'Disable Live Activity':'Enable Live Activity'}</Text></MotionPressable>{controls.error?<Text accessibilityLiveRegion="polite" style={{color:colors.muted,fontSize:12}}>{controls.error}</Text>:null}</View>:null}
       </ScrollView>
       <LayerBalanceDialog visible={balanceVisible} onClose={() => setBalanceVisible(false)} settings={settings} onChange={onLayerVolumeChange} />
     </>
