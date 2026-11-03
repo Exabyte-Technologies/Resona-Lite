@@ -4,13 +4,13 @@ import { StartupProvider } from '../startup';
 import Brand from '../components/Brand';
 import { Tabs } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Easing, StyleSheet, View } from 'react-native';
+import { Animated, Easing, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AccessibilityProvider, useAccessibilitySettings, useAppColorScheme } from '../accessibility';
 import Icon from '../components/Icon';
 import { PlayerProvider } from '../player-context';
 import { useThemeColors } from '../theme';
-import { MotionProvider, useReducedMotion } from '../motion';
+import { MotionProvider, useMotionValue, useReducedMotion } from '../motion';
 import { TutorialProvider } from '../tutorial-context';
 import { BlurBackdropProvider } from '../components/BlurBackdrop';
 
@@ -80,7 +80,7 @@ function AppTabs() {
           options={{
             title: t('Home'),
             tabBarAccessibilityLabel: t('Home'),
-            tabBarIcon: ({ color }) => <Icon name="home" color={String(color)} size={21} />,
+            tabBarIcon: ({ color, focused }) => <TabIcon name="home" color={String(color)} focused={focused} />,
           }}
         />
         <Tabs.Screen
@@ -88,12 +88,20 @@ function AppTabs() {
           options={{
             title: t('Advanced'),
             tabBarAccessibilityLabel: t('Advanced controls'),
-            tabBarIcon: ({ color }) => <Icon name="tune" color={String(color)} size={21} />,
+            tabBarIcon: ({ color, focused }) => <TabIcon name="tune" color={String(color)} focused={focused} />,
           }}
         />
       </Tabs>
     </View>
   );
+}
+
+function TabIcon({ name, color, focused }: { name: 'home' | 'tune'; color: string; focused: boolean }) {
+  const reduceMotion = useReducedMotion();
+  const scale = useMotionValue(focused ? 1.04 : 1, 160);
+  return <Animated.View style={!reduceMotion && { transform: [{ scale }] }}>
+    <Icon name={name} color={color} size={21} />
+  </Animated.View>;
 }
 
 const styles = StyleSheet.create({

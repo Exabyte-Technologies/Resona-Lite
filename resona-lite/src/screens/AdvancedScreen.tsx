@@ -1,6 +1,6 @@
 import { LocalizedText as Text, useLanguage } from '../i18n';
 import LayerBalanceControls from '../components/LayerBalanceControls';
-import { MotionPressable, SelectionWash } from '../motion';
+import { MotionEntrance, MotionPressable, SelectionWash } from '../motion';
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import AudioErrorNotice from '../components/AudioErrorNotice';
@@ -85,10 +85,10 @@ export default function AdvancedScreen({
         keyboardShouldPersistTaps="handled"
       >
         {audioError ? <AudioErrorNotice message={audioError} /> : null}
-        <View style={styles.intro}>
+        <MotionEntrance style={styles.intro}>
           <Text style={styles.title}>Fine-tune your sound</Text>
           <Text style={styles.description}>Rhythm, texture, tone and balance.</Text>
-        </View>
+        </MotionEntrance>
 
         <View style={[cardLayout.group, twoColumns && cardLayout.sideBySide]}>
           <View style={[cardLayout.group, twoColumns && cardLayout.column]}>
@@ -262,7 +262,7 @@ export default function AdvancedScreen({
                 onPress={onToggleNoise}
               />
               {noiseMuted && settings.noiseVolume === 0 &&
-                <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={styles.sectionNote}>Noise volume is at 0%.</Text>}
+                <MotionEntrance><Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={styles.sectionNote}>Noise volume is at 0%.</Text></MotionEntrance>}
             </Panel>
           </View>
         </View>

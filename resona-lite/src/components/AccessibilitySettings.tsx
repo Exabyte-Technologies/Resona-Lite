@@ -1,7 +1,7 @@
 import { StyleSheet, Switch, View } from 'react-native';
 import { useAccessibilitySettings } from '../accessibility';
 import { LocalizedText as Text, useLanguage } from '../i18n';
-import { MotionPressable } from '../motion';
+import { MotionPressable, SelectionWash } from '../motion';
 import { useThemeColors } from '../theme';
 import Panel from './Panel';
 import Icon from './Icon';
@@ -32,8 +32,9 @@ export default function AccessibilitySettings() {
           accessibilityRole="radio"
           aria-checked={selected}
           onPress={() => updatePreferences({ appearance: value })}
-          style={[styles.choice, { borderColor: colors.controlBorder, backgroundColor: selected ? colors.surfaceSelected : colors.surface }]}
+          style={[styles.choice, { borderColor: colors.controlBorder, backgroundColor: colors.surface }]}
         >
+          <SelectionWash selected={selected} color={colors.surfaceSelected} radius={12} />
           <Text style={[styles.label, { color: colors.ink }]}>{label}</Text>
           {selected && <Icon name="check" size={16} />}
         </MotionPressable>;

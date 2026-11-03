@@ -2,7 +2,7 @@ import { tabletModalOrientations } from '../layout';
 import { Modal, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LANGUAGES, LocalizedText as Text, useLanguage } from '../i18n';
-import { MotionPressable, useReducedMotion } from '../motion';
+import { MotionEntrance, MotionPressable, SelectionWash, useReducedMotion } from '../motion';
 import { useThemeColors } from '../theme';
 import BlurBackdrop from './BlurBackdrop';
 import Icon from './Icon';
@@ -13,7 +13,7 @@ export default function LanguagePicker({ visible, firstLaunch=false, onContinue,
   return <Modal supportedOrientations={tabletModalOrientations} transparent visible={visible} animationType={reduceMotion?'none':'fade'} onRequestClose={firstLaunch?()=>{}:onClose} statusBarTranslucent>
     <View style={[styles.overlay,{paddingTop:Math.max(insets.top,20),paddingBottom:Math.max(insets.bottom,20),direction:rtl?'rtl':'ltr'}]}>
       <BlurBackdrop intensity={30}/>
-      <View accessibilityViewIsModal style={[styles.card,{backgroundColor:c.surface,borderColor:c.line}]}>
+      <MotionEntrance dialog visible={visible} accessibilityViewIsModal style={[styles.card,{backgroundColor:c.surface,borderColor:c.line}]}>
         <View style={styles.heading}><Icon name="language" size={24}/><Text accessibilityRole="header" style={[styles.title,{color:c.ink}]}>Choose your language</Text></View>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.list}>
           <LanguageOptions />
@@ -21,7 +21,7 @@ export default function LanguagePicker({ visible, firstLaunch=false, onContinue,
         <View style={styles.actions}>
           <MotionPressable accessibilityRole="button" accessibilityLabel={t(firstLaunch?'Continue':'Done')} onPress={()=>{setLanguage(language);onContinue();}} style={[styles.continue,{backgroundColor:c.accent}]}><Text style={{color:c.accentInk,fontWeight:'600'}}>{firstLaunch?'Continue':'Done'}</Text></MotionPressable>
         </View>
-      </View>
+      </MotionEntrance>
     </View>
   </Modal>;
 }
@@ -29,7 +29,8 @@ export function LanguageOptions() {
   const { language, setLanguage } = useLanguage();
   const c = useThemeColors();
   return <View style={styles.options}>
-    {LANGUAGES.map(item=><MotionPressable key={item.code} accessibilityRole="radio" accessibilityLabel={item.name} aria-checked={item.code===language} onPress={()=>setLanguage(item.code)} style={[styles.language,{borderColor:item.code===language?c.selectedBorder:c.controlBorder,backgroundColor:item.code===language?c.surfaceSelected:c.surfaceSubtle}]}>
+    {LANGUAGES.map(item=><MotionPressable key={item.code} accessibilityRole="radio" accessibilityLabel={item.name} aria-checked={item.code===language} onPress={()=>setLanguage(item.code)} style={[styles.language,{borderColor:item.code===language?c.selectedBorder:c.controlBorder,backgroundColor:c.surfaceSubtle}]}>
+      <SelectionWash selected={item.code===language} color={c.surfaceSelected} radius={12} />
       <Text style={{flexShrink:1,color:c.ink,fontSize:17,writingDirection:item.code==='ar'?'rtl':'ltr'}}>{item.name}</Text>
       {item.code===language && <Icon name="check" size={18} />}
     </MotionPressable>)}

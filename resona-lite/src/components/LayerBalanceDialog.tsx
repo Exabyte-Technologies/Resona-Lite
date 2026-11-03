@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BlurBackdrop from './BlurBackdrop';
 import Icon from './Icon';
 import LayerBalanceControls, { type LayerBalanceProps } from './LayerBalanceControls';
-import { MotionPressable, useReducedMotion } from '../motion';
+import { MotionEntrance, MotionPressable, useReducedMotion } from '../motion';
 import { fonts, useThemeColors } from '../theme';
 
 export default function LayerBalanceDialog({ visible, onClose, settings, onChange }: LayerBalanceProps & { visible: boolean; onClose: () => void }) {
@@ -17,7 +17,7 @@ export default function LayerBalanceDialog({ visible, onClose, settings, onChang
     <View style={[styles.overlay, { paddingTop:Math.max(insets.top,24), paddingBottom:Math.max(insets.bottom,24),direction:rtl?'rtl':'ltr' }]}>
       <BlurBackdrop intensity={22} />
       <Pressable accessible={false} onPress={onClose} style={StyleSheet.absoluteFill} />
-      <View accessibilityViewIsModal style={[styles.card, { backgroundColor:colors.surface, borderColor:colors.line }]}>
+      <MotionEntrance dialog visible={visible} accessibilityViewIsModal style={[styles.card, { backgroundColor:colors.surface, borderColor:colors.line }]}>
         <View style={styles.heading}>
           <View style={[styles.icon, { backgroundColor:colors.iconSurface }]}><Icon name="balance" size={20} /></View>
           <Text accessibilityRole="header" style={[styles.title, { color:colors.ink }]}>Layer balance</Text>
@@ -27,7 +27,7 @@ export default function LayerBalanceDialog({ visible, onClose, settings, onChang
           <Text style={[styles.description, { color:colors.muted }]}>Find your blend. Changes apply to your soundscape as you listen.</Text>
           <LayerBalanceControls settings={settings} onChange={onChange} />
         </ScrollView>
-      </View>
+      </MotionEntrance>
     </View>
   </Modal>;
 }

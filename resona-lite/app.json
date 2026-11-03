@@ -8,7 +8,7 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "com.resona.lite",
-      "buildNumber": "5",
+      "buildNumber": "8",
       "supportsTablet": true,
       "infoPlist": {
         "UISupportedInterfaceOrientations~ipad": [

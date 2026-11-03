@@ -3,7 +3,7 @@ import { Modal, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LANGUAGES, LocalizedText as Text, useLanguage } from '../i18n';
 import { tabletModalOrientations } from '../layout';
-import { MotionPressable, useReducedMotion } from '../motion';
+import { MotionEntrance, MotionPressable, useReducedMotion } from '../motion';
 import { useThemeColors } from '../theme';
 import AccessibilitySettings from './AccessibilitySettings';
 import BlurBackdrop from './BlurBackdrop';
@@ -32,7 +32,7 @@ export default function SettingsDialog({ visible, onClose }: { visible: boolean;
     }]}>
       <BlurBackdrop />
       {page === 'tour' ? <TutorialCard onClose={goBack} /> :
-        <View accessibilityViewIsModal style={[styles.dialog, { backgroundColor: colors.surfaceSubtle, borderColor: colors.controlBorder }]}>
+        <MotionEntrance dialog visible={visible} transitionKey={page} accessibilityViewIsModal style={[styles.dialog, { backgroundColor: colors.surfaceSubtle, borderColor: colors.controlBorder }]}>
           <View style={styles.header}>
             <Text accessibilityRole="header" style={[styles.title, { color: colors.ink }]}>{page === 'settings' ? 'Settings' : 'Choose your language'}</Text>
             <MotionPressable accessibilityRole="button" onPress={dismiss} style={styles.action}>
@@ -55,7 +55,7 @@ export default function SettingsDialog({ visible, onClose }: { visible: boolean;
               </View>
             </>}
           </ScrollView>
-        </View>
+        </MotionEntrance>
       }
     </View>
   </Modal>;

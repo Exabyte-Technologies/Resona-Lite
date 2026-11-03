@@ -1,6 +1,7 @@
 import { LocalizedText as Text } from '../i18n';
 import type { PropsWithChildren } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { MotionEntrance } from '../motion';
 import Icon, { type IconName } from './Icon';
 import { fonts, spacing, useThemeColors } from '../theme';
 
@@ -13,7 +14,7 @@ export default function Panel({
   const colors = useThemeColors();
 
   return (
-    <View style={[
+    <MotionEntrance style={[
       styles.panel,
       { backgroundColor: colors.surface, borderColor: colors.line },
       compact && styles.compactPanel,
@@ -27,7 +28,7 @@ export default function Panel({
         </Text>
       </View>
       {children}
-    </View>
+    </MotionEntrance>
   );
 }
 

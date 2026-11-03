@@ -1,6 +1,6 @@
 import { LocalizedText as Text, useLanguage } from '../i18n';
-import { MotionPressable, SelectionWash } from '../motion';
-import { StyleSheet, Switch, TextInput, View } from 'react-native';
+import { MotionEntrance, MotionPressable, MotionTextInput, SelectionWash } from '../motion';
+import { StyleSheet, Switch, View } from 'react-native';
 import { useAccessibilitySettings, useAppColorScheme } from '../accessibility';
 import Icon from './Icon';
 import { cardLayout } from '../layout';
@@ -73,7 +73,7 @@ export function CompositionControls({ twoColumns }: { twoColumns: boolean }) {
       <Panel title="Chord progression" icon="layers" compact>
         <Text style={{ color:colors.muted }}>The original offline chord model. Starting chords are optional; generation stays on your phone.</Text>
         <Text style={{ color:colors.ink }}>Starting chords</Text>
-        <TextInput accessibilityLabel={t("Starting chords")} placeholder="C Amin F G" placeholderTextColor={colors.dim} keyboardAppearance={keyboardAppearance} autoCapitalize="none" autoCorrect={false} value={seed} maxLength={256} onChangeText={seed => updateChordEditor({ seed })} style={[styles.input,{ fontSize: 16 * textMultiplier, color:colors.ink, borderColor:colors.controlBorder, backgroundColor:colors.surfaceSubtle }]} />
+        <MotionTextInput accessibilityLabel={t("Starting chords")} placeholder="C Amin F G" placeholderTextColor={colors.dim} keyboardAppearance={keyboardAppearance} autoCapitalize="none" autoCorrect={false} value={seed} maxLength={256} onChangeText={seed => updateChordEditor({ seed })} style={[styles.input,{ fontSize: 16 * textMultiplier, color:colors.ink, borderColor:colors.controlBorder, backgroundColor:colors.surfaceSubtle }]} />
         <RangeControl compact title="Progression length" minimum={2} maximum={32} value={length} onChange={length => updateChordEditor({ length })} />
         <RangeControl compact title="Seconds per chord" minimum={2} maximum={120} value={duration} unit=" s" onChange={duration => updateChordEditor({ duration })} />
         <Text style={{ color:colors.muted }}>Chord transition timing · 0 means instant. Manual tuning keeps its smooth glide.</Text>
@@ -88,10 +88,10 @@ export function CompositionControls({ twoColumns }: { twoColumns: boolean }) {
           {chords.map((chord, index) => {
             const selected = e?.chordProgressionIndex === index && s.tonalSource === 'generated';
             const note = chord.replace(/([A-G])s/g, '$1♯');
-            return <View key={index} accessible accessibilityLabel={note} accessibilityState={{ selected }} style={[styles.chord, { borderColor: colors.controlBorder }]}>
+            return <MotionEntrance key={index} transitionKey={note} accessible accessibilityLabel={note} accessibilityState={{ selected }} style={[styles.chord, { borderColor: colors.controlBorder }]}>
               {selected && <Icon name="check" size={16} />}
               <Text style={{ color: selected ? colors.accent : colors.ink }}>{note}</Text>
-            </View>;
+            </MotionEntrance>;
           })}
         </View>
         <View style={styles.row}>

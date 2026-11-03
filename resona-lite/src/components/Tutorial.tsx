@@ -5,7 +5,7 @@ import { AccessibilityInfo, Animated, Easing, Modal, ScrollView, StyleSheet, Vie
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon, { type IconName } from './Icon';
 import BlurBackdrop from './BlurBackdrop';
-import { MotionPressable, useReducedMotion } from '../motion';
+import { MotionEntrance, MotionPressable, useReducedMotion } from '../motion';
 import { fonts, useThemeColors, type ThemeColors } from '../theme';
 import { useAccessibilitySettings } from '../accessibility';
 
@@ -66,7 +66,7 @@ export function TutorialCard({ noticeVisible = false, onAcceptNotice, onClose }:
       Animated.timing(progress, { toValue:1, duration:260, easing:Easing.out(Easing.cubic), useNativeDriver:true }).start(() => setTransitioning(false));
     });
   };
-  return <View style={styles.card} accessibilityViewIsModal>
+  return <MotionEntrance dialog transitionKey={noticeVisible ? 'notice' : 'tour'} style={styles.card} accessibilityViewIsModal>
     <View style={styles.topBar}>
       <Text style={styles.brand}>resona<Text style={{ color:colors.accent }}>.</Text><Text style={styles.lite}>  LITE</Text></Text>
       {!noticeVisible && <MotionPressable accessibilityRole="button" accessibilityLabel="Skip tutorial" onPress={onClose} style={styles.textButton}><Text style={styles.secondaryText}>Skip tour</Text></MotionPressable>}
@@ -106,7 +106,7 @@ export function TutorialCard({ noticeVisible = false, onAcceptNotice, onClose }:
         </View>
       </View>
     </>}
-  </View>;
+  </MotionEntrance>;
 }
 
 function TutorialArtwork({ step, icon }: { step: number; icon: IconName }) {

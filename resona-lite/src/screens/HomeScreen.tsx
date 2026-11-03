@@ -20,7 +20,7 @@ import Panel from '../components/Panel';
 import LayerBalanceDialog from '../components/LayerBalanceDialog';
 import type { LayerVolumeKey } from '../components/LayerBalanceControls';
 import { fonts, spacing, useThemeColors, type ThemeColors } from '../theme';
-import { MotionPressable, SelectionWash, useMotionValue, useReducedMotion } from '../motion';
+import { MotionEntrance, MotionPressable, SelectionWash, useMotionValue, useReducedMotion } from '../motion';
 
 type Props = {
   timer?: {deadline:number|null;remaining:number;finished:boolean;onChange:(minutes:number|null)=>void};
@@ -69,7 +69,7 @@ export default function HomeScreen({
         keyboardShouldPersistTaps="handled"
       >
         {audioError ? <AudioErrorNotice message={audioError} /> : null}
-        <View style={styles.intro}>
+        <MotionEntrance style={styles.intro}>
           <View style={styles.eyebrow}>
             <View style={styles.eyebrowMark} />
             <Text style={styles.eyebrowText}>A little space to reset</Text>
@@ -78,11 +78,11 @@ export default function HomeScreen({
           <Text style={styles.description}>
             Choose a listening mode and shape the sound around you.
           </Text>
-        </View>
+        </MotionEntrance>
 
         <View style={[cardLayout.group, twoColumns && cardLayout.sideBySide]}>
           <View style={twoColumns && cardLayout.column}>
-            <View style={styles.player}>
+            <MotionEntrance style={styles.player}>
               <View style={styles.playerHeading}>
                 <View style={styles.playerCopy}>
                   <Text style={styles.playerTitle}>Your soundscape</Text>
@@ -93,9 +93,11 @@ export default function HomeScreen({
                 </View>
                 <View style={[styles.statusPill, isPlaying && styles.statusPillPlaying]}>
                   <View style={[styles.statusDot, isPlaying && styles.statusDotPlaying]} />
-                  <Text accessibilityLiveRegion="polite" style={styles.playState}>
-                    {isPlaying ? 'Playing' : audioReady ? 'Ready' : 'Tuning'}
-                  </Text>
+                  <MotionEntrance transitionKey={isPlaying ? 'playing' : audioReady ? 'ready' : 'loading'}>
+                    <Text accessibilityLiveRegion="polite" style={styles.playState}>
+                      {isPlaying ? 'Playing' : audioReady ? 'Ready' : 'Tuning'}
+                    </Text>
+                  </MotionEntrance>
                 </View>
               </View>
 
@@ -139,7 +141,7 @@ export default function HomeScreen({
                 <Icon name="balance" size={17} />
                 <Text style={styles.balanceButtonText}>Layer balance</Text>
               </MotionPressable>
-            </View>
+            </MotionEntrance>
           </View>
           <View style={[cardLayout.group, twoColumns && cardLayout.column]}>
             <Panel title="Choose a mood" icon="meditation" compact>

@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Modal, ScrollView, StyleSheet, Text as UserText, TextInput, View } from 'react-native';
+import { Modal, ScrollView, StyleSheet, Text as UserText, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAccessibilitySettings } from '../accessibility';
 import { LocalizedText as Text, useLanguage } from '../i18n';
 import { tabletModalOrientations } from '../layout';
-import { MotionPressable, useReducedMotion } from '../motion';
+import { MotionEntrance, MotionPressable, MotionTextInput, useReducedMotion } from '../motion';
 import { usePlayer } from '../player-context';
 import { sameConfiguration, type SavedConfiguration } from '../sound-configurations';
 import { useThemeColors } from '../theme';
@@ -67,14 +67,14 @@ export default function SavedConfigurationsDialog({ onClose }: { onClose: () => 
       direction: rtl ? 'rtl' : 'ltr',
     }]}>
       <BlurBackdrop />
-      <View accessibilityViewIsModal style={[styles.dialog, { backgroundColor: colors.surfaceSubtle, borderColor: colors.controlBorder }]}>
+      <MotionEntrance dialog transitionKey={form ? 'name' : confirmation ? 'confirm' : 'list'} accessibilityViewIsModal style={[styles.dialog, { backgroundColor: colors.surfaceSubtle, borderColor: colors.controlBorder }]}>
         <View style={styles.header}>
           <Text accessibilityRole="header" style={[styles.title, { color: colors.ink }]}>Saved configurations</Text>
           {button(form || confirmation ? 'Back' : 'Done', dismiss)}
         </View>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.body}>
           {form ? <>
-            <TextInput accessibilityLabel={t('Configuration name')} placeholder={t('Configuration name')}
+            <MotionTextInput accessibilityLabel={t('Configuration name')} placeholder={t('Configuration name')}
               placeholderTextColor={colors.muted} value={form.name} maxLength={60}
               onChangeText={name => { setForm({ ...form, name }); setError(''); }}
               onSubmitEditing={save} returnKeyType="done"
@@ -107,7 +107,7 @@ export default function SavedConfigurationsDialog({ onClose }: { onClose: () => 
           </>}
           {error ? <Text accessibilityRole="alert" style={{ color: colors.error }}>{error}</Text> : null}
         </ScrollView>
-      </View>
+      </MotionEntrance>
     </View>
   </Modal>;
 }

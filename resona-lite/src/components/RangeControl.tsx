@@ -1,9 +1,10 @@
 import { LocalizedText as Text, useLanguage } from '../i18n';
 import { useState } from 'react';
 import Slider from '@react-native-community/slider';
-import { StyleSheet, View } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
 import { fonts, spacing, useThemeColors } from '../theme';
 import { useAccessibilitySettings } from '../accessibility';
+import { useMotionValue, useReducedMotion } from '../motion';
 
 type Props = {
   title: string;
@@ -36,6 +37,8 @@ export default function RangeControl({
   const [draftValue, setDraftValue] = useState(value);
   const [isSliding, setIsSliding] = useState(false);
   const displayedValue = isSliding ? draftValue : value;
+  const reduceMotion = useReducedMotion();
+  const scale = useMotionValue(isSliding ? 1.04 : 1, 140);
 
   return (
     <View style={[
@@ -64,15 +67,17 @@ export default function RangeControl({
             </Text>
           ) : null}
         </View>
-        <Text style={[
-          styles.value,
-          { color: colors.accent },
-          compact && styles.compactValue,
-          grid && styles.gridValue,
-        ]}>
-          {formatValue(displayedValue)}
-          {unit}
-        </Text>
+        <Animated.View style={[styles.readout, !reduceMotion && { transform: [{ scale }] }]}>
+          <Text style={[
+            styles.value,
+            { color: colors.accent },
+            compact && styles.compactValue,
+            grid && styles.gridValue,
+          ]}>
+            {formatValue(displayedValue)}
+            {unit}
+          </Text>
+        </Animated.View>
       </View>
       <View style={[styles.sliderInset, grid && styles.gridSliderInset]}>
         <Slider
@@ -166,8 +171,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 14,
   },
+  readout: { flexShrink: 1 },
   value: {
-    flexShrink: 1,
     minWidth: 52,
     fontFamily: fonts.body,
     fontSize: 14,
