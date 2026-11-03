@@ -65,7 +65,7 @@ test('Home transport starts all original layers, and volume changes keep the gra
   const voices=r.audio.ambientVoices, oscillator=r.audio.left;
   await r.window.resonaCommand({action:'setMaster',args:[23]});
   assert.equal(r.audio.ambientVoices,voices); assert.equal(r.audio.left,oscillator);
-  close(r.audio.master.gain.value,.5*.23);
+  close(r.audio.master.gain.value,.5*.23*15/50);
   assert.equal(r.nodes.filter(n=>n.kind==='Convolver').length,1);
   assert.ok(r.nodes.filter(n=>n.kind==='Delay').length>=4);
   await r.window.resonaCommand({action:'toggleSession'});
@@ -146,8 +146,9 @@ test('continuous pipeline rotates A/B/C, and disabling it cancels future sets',a
   const promise=r.window.resonaCommand({action:'generate',args:[options]}); r.tick(0); await promise;
   let state=r.messages.at(-1); assert.equal(state.pipeline.playing,'A'); assert.equal(state.pipeline.ready.join(''),'B'); assert.equal(state.pipeline.generating,'C');
   r.tick(0); await new Promise(resolve=>setImmediate(resolve));
+  const savedProgression = state.savedProgression;
   r.tick(2000); r.tick(2000);
-  state=r.messages.at(-1); assert.equal(state.pipeline.playing,'B'); assert.equal(state.pipeline.ready.join(''),'C'); assert.equal(state.pipeline.generating,'D');
+  state=r.messages.at(-1); assert.deepEqual(state.savedProgression, savedProgression); assert.equal(state.pipeline.playing,'B'); assert.equal(state.pipeline.ready.join(''),'C'); assert.equal(state.pipeline.generating,'D');
   await r.window.resonaCommand({action:'continuous',args:[false]});
   r.tick(0); await new Promise(resolve=>setImmediate(resolve));
   assert.equal(r.messages.at(-1).pipeline.enabled,false);
@@ -190,4 +191,99 @@ test('remote pause preserves the original graph and freezes chords until play re
 });
 test('cancelled sleep timer does not stop a later session',async()=>{
  const r=runtime({bridge:true});await r.window.resonaCommand({action:'sleepTimer',args:[160000]});await r.window.resonaCommand({action:'sleepTimer',args:[null]});r.setNow(170000);await r.window.resonaCommand({action:'playSession'});await r.window.resonaCommand({action:'resume'});assert.ok(r.audio.playing&&r.audio.ambientPlaying);
+});
+
+test('enabling noise at zero preserves the active graph and the mixer level', async () => {
+  const r = runtime({ bridge: true });
+  const command = (action, ...args) => r.window.resonaCommand({ action, args });
+  await command('toggleSession');
+  const context = r.audio.context;
+  const oscillator = r.audio.left;
+  const voices = r.audio.ambientVoices;
+  assert.equal(r.audio.config.volumes.binaural, 15);
+  assert.equal(r.audio.config.volumes.ambient, 90);
+  await command('toggleNoise');
+  assert.ok(r.messages.some(message => message.type === 'noiseMuted'));
+  assert.equal(r.audio.config.volumes.noise, 0);
+  await command('setVolume', 'noise', 25);
+  assert.ok(r.audio.noiseOutput.gain.value > 0);
+  await command('setNoise', 'ocean');
+  await command('setNoise', 'rain');
+  r.tick(850);
+  assert.ok(r.audio.noisePlaying && r.audio.playing && r.audio.ambientPlaying);
+  assert.equal(r.audio.config.noise, 'rain');
+  assert.equal(r.audio.context, context);
+  assert.equal(r.audio.left, oscillator);
+  assert.equal(r.audio.ambientVoices, voices);
+});
+
+function savedSound() {
+  const defaults = runtime().audio.config;
+  return {
+    sound: {
+      ...defaults.ambient.parameters,
+      mode: 'focus', masterVolume: 42, beatHz: 10, binauralMode: 'individual', leftFrequency: 100, rightFrequency: 110,
+      atmosphere: 'restore', tonalSource: 'generated', manualRootMidi: 57, droneFrequency: 220,
+      drone: 58, pads: 68, textures: 30, melody: 18, spatial: 58,
+      noise: 'rain', binauralVolume: 15, ambientVolume: 90, noiseVolume: 30,
+      chordTransition: 1, binauralChordTransition: 2,
+    },
+    editor: { continuous: false },
+    progression: { chords: ['G', 'D'], duration: 12 },
+  };
+}
+
+test('loading an exact progression preserves active tracks and does not autoplay from idle', async () => {
+  const r = runtime({ bridge: true });
+  const command = (action, ...args) => r.window.resonaCommand({ action, args });
+  await command('applyConfiguration', savedSound(), 1);
+  assert.equal(r.audio.context, null);
+  assert.equal(r.messages.at(-1).appliedConfiguration, 1);
+  await command('toggleSession');
+  const oscillator = r.audio.left;
+  const voices = r.audio.ambientVoices;
+  await command('applyConfiguration', savedSound(), 2);
+  const state = r.messages.at(-1);
+  assert.equal(state.appliedConfiguration, 2);
+  assert.equal(state.config.master, 42);
+  assert.equal(state.config.binauralMode, 'individual');
+  assert.equal(state.config.ambient.chordProgression.join(' '), 'G D');
+  close(state.config.carrier, 220);
+  assert.equal(state.config.ambient.chordDuration, 12);
+  assert.equal(r.audio.left, oscillator);
+  assert.equal(r.audio.ambientVoices, voices);
+  await command('pauseAll');
+  await command('applyConfiguration', savedSound(), 3);
+  assert.ok(r.messages.at(-1).paused);
+  assert.equal(r.audio.context.state, 'suspended');
+});
+
+test('late generation cannot restart a stopped or replaced sound', async () => {
+  for (const action of ['stopAll', 'applyConfiguration']) {
+    const r = runtime({ bridge: true });
+    const command = (type, ...args) => r.window.resonaCommand({ action: type, args });
+    const promise = command('generate', { seedChords: ['C'], length: 2, duration: 4, greedy: true });
+    await command(action, savedSound(), 1);
+    r.tick(0);
+    await promise;
+    assert.equal(r.audio.context, null);
+    assert.equal(r.messages.at(-1).generating, false);
+    assert.equal(r.audio.config.ambient.chordProgression.length, action === 'stopAll' ? 0 : 2);
+  }
+});
+
+test('generating from pause resumes the same context and leaves the binaural graph intact', async () => {
+  const r = runtime({ bridge: true });
+  const command = (action, ...args) => r.window.resonaCommand({ action, args });
+  await command('toggleSession');
+  const context = r.audio.context, oscillator = r.audio.left;
+  await command('pauseAll');
+  const promise = command('generate', { seedChords: ['C'], length: 2, duration: 4, greedy: true });
+  r.tick(0);
+  await promise;
+  assert.equal(r.audio.context, context);
+  assert.equal(r.audio.left, oscillator);
+  assert.equal(context.state, 'running');
+  assert.equal(r.messages.at(-1).paused, false);
+  assert.equal(r.audio.config.ambient.tonalSource, 'generated');
 });

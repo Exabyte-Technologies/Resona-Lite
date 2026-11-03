@@ -55,9 +55,9 @@ export const DEFAULT_SETTINGS: SoundSettings = {
   melody: 18,
   spatial: 58,
   noise: 'pink',
-  binauralVolume: 50,
-  ambientVolume: 50,
-  noiseVolume: 50,
+  binauralVolume: 15,
+  ambientVolume: 90,
+  noiseVolume: 0,
 };
 
 export const MODES: readonly {

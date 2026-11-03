@@ -10,6 +10,7 @@ export default function AdvancedRoute() {
       binauralPlaying={player.binauralPlaying}
       ambientPlaying={player.ambientPlaying}
       noisePlaying={player.noisePlaying}
+      noiseMuted={player.noiseMuted}
       audioReady={player.audioReady}
       audioError={player.audioError}
       onSettingChange={player.updateSetting}

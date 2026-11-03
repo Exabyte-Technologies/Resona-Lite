@@ -1,6 +1,5 @@
 import { LocalizedText as Text, useLanguage } from '../i18n';
 import { MotionPressable, SelectionWash } from '../motion';
-import { useState } from 'react';
 import { StyleSheet, Switch, TextInput, View } from 'react-native';
 import { useAccessibilitySettings, useAppColorScheme } from '../accessibility';
 import Icon from './Icon';
@@ -9,7 +8,6 @@ import Panel from './Panel';
 import RangeControl from './RangeControl';
 import { usePlayer } from '../player-context';
 import { fonts, useThemeColors } from '../theme';
-import type { SoundSettings } from '../model';
 
 function Choice({ label, selected = false, disabled = false, onPress }: { label: string; selected?: boolean; disabled?: boolean; onPress: () => void }) {
   const colors = useThemeColors();
@@ -47,18 +45,12 @@ export function BinauralControls() {
 }
 
 export function CompositionControls({ twoColumns }: { twoColumns: boolean }) {
-  const { settings:s, updateSetting:set, engineState:e, command, generateChords, audioReady } = usePlayer();
+  const { settings:s, updateSetting:set, engineState:e, command, generateChords, audioReady, chordEditor, updateChordEditor } = usePlayer();
   const colors = useThemeColors();
   const { textMultiplier } = useAccessibilitySettings();
   const keyboardAppearance = useAppColorScheme();
   const {t}=useLanguage();
-  const [seed, setSeed] = useState('');
-  const [length, setLength] = useState(8);
-  const [duration, setDuration] = useState(4);
-  const [temperature, setTemperature] = useState(1);
-  const [topK, setTopK] = useState(10);
-  const [greedy, setGreedy] = useState(false);
-  const [continuous, setContinuous] = useState(false);
+  const { seed, length, duration, temperature, topK, greedy, continuous } = chordEditor;
   const chords = e?.config.ambient.chordProgression ?? [];
   return <View style={[cardLayout.group, twoColumns && cardLayout.sideBySide]}>
     <View style={[cardLayout.group, twoColumns && cardLayout.column]}>
@@ -76,25 +68,21 @@ export function CompositionControls({ twoColumns }: { twoColumns: boolean }) {
         <Text style={{ color:colors.muted }}>Drone · Harmonic pad · Analog drift · Weather texture · High shimmer · Felt anchor</Text>
         {(['warmth','movement','space','texture','shimmer','output'] as const).map(key => <RangeControl key={key} compact title={key[0].toUpperCase()+key.slice(1)} minimum={0} maximum={100} value={s[key]} onChange={v => set(key,v)} />)}
       </Panel>
-      <Panel title="Support tone mix" icon="balance" compact>
-        <Text style={{ color:colors.muted }}>Set the supporting binaural tone blend for the next playback, as on Resona.</Text>
-        {(['pad','flute','strings','bells'] as const).map((key: keyof Pick<SoundSettings,'pad' | 'flute' | 'strings' | 'bells'>) => <RangeControl key={key} compact title={key[0].toUpperCase()+key.slice(1)} minimum={0} maximum={100} value={s[key]} onChange={v => set(key,v)} />)}
-      </Panel>
     </View>
     <View style={twoColumns && cardLayout.column}>
       <Panel title="Chord progression" icon="layers" compact>
         <Text style={{ color:colors.muted }}>The original offline chord model. Starting chords are optional; generation stays on your phone.</Text>
         <Text style={{ color:colors.ink }}>Starting chords</Text>
-        <TextInput accessibilityLabel={t("Starting chords")} placeholder="C Amin F G" placeholderTextColor={colors.dim} keyboardAppearance={keyboardAppearance} autoCapitalize="none" autoCorrect={false} value={seed} onChangeText={setSeed} style={[styles.input,{ fontSize: 16 * textMultiplier, color:colors.ink, borderColor:colors.controlBorder, backgroundColor:colors.surfaceSubtle }]} />
-        <RangeControl compact title="Progression length" minimum={2} maximum={32} value={length} onChange={setLength} />
-        <RangeControl compact title="Seconds per chord" minimum={2} maximum={120} value={duration} unit=" s" onChange={setDuration} />
+        <TextInput accessibilityLabel={t("Starting chords")} placeholder="C Amin F G" placeholderTextColor={colors.dim} keyboardAppearance={keyboardAppearance} autoCapitalize="none" autoCorrect={false} value={seed} maxLength={256} onChangeText={seed => updateChordEditor({ seed })} style={[styles.input,{ fontSize: 16 * textMultiplier, color:colors.ink, borderColor:colors.controlBorder, backgroundColor:colors.surfaceSubtle }]} />
+        <RangeControl compact title="Progression length" minimum={2} maximum={32} value={length} onChange={length => updateChordEditor({ length })} />
+        <RangeControl compact title="Seconds per chord" minimum={2} maximum={120} value={duration} unit=" s" onChange={duration => updateChordEditor({ duration })} />
         <Text style={{ color:colors.muted }}>Chord transition timing · 0 means instant. Manual tuning keeps its smooth glide.</Text>
         <RangeControl compact title="Ambient chord transition" minimum={0} maximum={4} step={0.1} unit=" s" value={s.chordTransition} onChange={v => set('chordTransition',v)} />
         <RangeControl compact title="Binaural chord transition" minimum={0} maximum={4} step={0.1} unit=" s" value={s.binauralChordTransition} onChange={v => set('binauralChordTransition',v)} />
-        <RangeControl compact title="Creativity" minimum={0.1} maximum={2} step={0.1} value={temperature} onChange={setTemperature} />
-        <RangeControl compact title="Top choices" minimum={1} maximum={100} value={topK} onChange={setTopK} />
-        <View style={styles.switchRow}><Text style={{ flex:1, color:colors.ink }}>Predictable mode</Text><Switch accessibilityLabel={t("Predictable mode")} value={greedy} onValueChange={setGreedy} /></View>
-        <View style={styles.switchRow}><Text style={{ flex:1, color:colors.ink }}>Continuous sets</Text><Switch accessibilityLabel={t("Continuous sets")} value={continuous} onValueChange={value => { setContinuous(value); command('continuous',value); }} /></View>
+        <RangeControl compact title="Creativity" minimum={0.1} maximum={2} step={0.1} value={temperature} onChange={temperature => updateChordEditor({ temperature })} />
+        <RangeControl compact title="Top choices" minimum={1} maximum={100} value={topK} onChange={topK => updateChordEditor({ topK })} />
+        <View style={styles.switchRow}><Text style={{ flex:1, color:colors.ink }}>Predictable mode</Text><Switch accessibilityLabel={t("Predictable mode")} value={greedy} onValueChange={greedy => updateChordEditor({ greedy })} /></View>
+        <View style={styles.switchRow}><Text style={{ flex:1, color:colors.ink }}>Continuous sets</Text><Switch accessibilityLabel={t("Continuous sets")} value={continuous} onValueChange={value => { updateChordEditor({ continuous: value }); command('continuous',value); }} /></View>
         {e?.pipeline.enabled ? <Text accessibilityLiveRegion="polite" style={{ color:colors.accent }}>Playing {e.pipeline.playing ?? '—'} · Ready {e.pipeline.ready.join(', ') || '—'} · Generating {e.pipeline.generating ?? '—'}</Text> : null}
         <View style={styles.row}>
           {chords.map((chord, index) => {

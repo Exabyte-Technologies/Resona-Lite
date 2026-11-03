@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import AudioErrorNotice from '../components/AudioErrorNotice';
 import SettingsDialog from '../components/SettingsDialog';
+import SavedConfigurationsDialog from '../components/SavedConfigurationsDialog';
 import { useAccessibilitySettings } from '../accessibility';
 import { cardLayout, useTwoColumnLayout } from '../layout';
 import Icon, { type IconName } from '../components/Icon';
@@ -37,6 +38,7 @@ type Props = {
   binauralPlaying: boolean;
   ambientPlaying: boolean;
   noisePlaying: boolean;
+  noiseMuted: boolean;
   audioReady: boolean;
   audioError: string | null;
   onSettingChange: <Key extends SettingKey>(key: Key, value: SoundSettings[Key]) => void;
@@ -59,6 +61,7 @@ export default function AdvancedScreen({
   binauralPlaying,
   ambientPlaying,
   noisePlaying,
+  noiseMuted,
   audioReady,
   audioError,
   onSettingChange,
@@ -70,7 +73,7 @@ export default function AdvancedScreen({
   const { spacious } = useAccessibilitySettings();
   const twoColumns = useTwoColumnLayout();
   const styles = useMemo(() => createStyles(colors, spacious), [colors, spacious]);
-  const [settingsVisible, setSettingsVisible] = useState(false);
+  const [dialog, setDialog] = useState<'settings' | 'configurations' | null>(null);
   const [focusedBand, setFocusedBand] = useState<number | null>(null);
   const {t}=useLanguage();
 
@@ -258,17 +261,26 @@ export default function AdvancedScreen({
                 audioReady={audioReady}
                 onPress={onToggleNoise}
               />
+              {noiseMuted && settings.noiseVolume === 0 &&
+                <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={styles.sectionNote}>Noise volume is at 0%.</Text>}
             </Panel>
           </View>
         </View>
         <CompositionControls twoColumns={twoColumns} />
 
-        <MotionPressable accessibilityRole="button" onPress={() => setSettingsVisible(true)} style={styles.settingsButton}>
-          <Icon name="tune" size={18} />
-          <Text style={styles.settingsLabel}>Settings</Text>
-        </MotionPressable>
+        <View style={styles.settingsActions}>
+          <MotionPressable accessibilityRole="button" onPress={() => setDialog('settings')} style={styles.settingsButton}>
+            <Icon name="tune" size={18} />
+            <Text style={styles.settingsLabel}>Settings</Text>
+          </MotionPressable>
+          <MotionPressable accessibilityRole="button" onPress={() => setDialog('configurations')} style={styles.settingsButton}>
+            <Icon name="layers" size={18} />
+            <Text style={styles.settingsLabel}>Saved configurations</Text>
+          </MotionPressable>
+        </View>
       </ScrollView>
-      <SettingsDialog visible={settingsVisible} onClose={() => setSettingsVisible(false)} />
+      <SettingsDialog visible={dialog === 'settings'} onClose={() => setDialog(null)} />
+      {dialog === 'configurations' && <SavedConfigurationsDialog onClose={() => setDialog(null)} />}
     </>
   );
 }
@@ -379,8 +391,9 @@ function capitalize(noise: NoiseType) {
 
 function createStyles(colors: ThemeColors, spacious: boolean) {
   return StyleSheet.create({
-    settingsButton: { alignSelf: 'center', minHeight: 48, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: colors.controlBorder, backgroundColor: colors.surface },
-    settingsLabel: { fontSize: 14, fontWeight: '600', color: colors.ink, textAlign: 'center' },
+    settingsActions: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8 },
+    settingsButton: { maxWidth: '100%', minHeight: 48, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: colors.controlBorder, backgroundColor: colors.surface },
+    settingsLabel: { flexShrink: 1, fontSize: 14, fontWeight: '600', color: colors.ink, textAlign: 'center' },
     content: {
       paddingHorizontal: spacing.page,
       paddingTop: spacing.sm,

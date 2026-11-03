@@ -1,4 +1,5 @@
 import type { SoundSettings } from '../model';
+import type { Progression } from '../sound-configurations';
 
 export type AudioCommand = { action: string; args?: unknown[] };
 export type ChordOptions = {
@@ -12,6 +13,8 @@ export type ChordOptions = {
 };
 export type EngineState = {
   type: 'state';
+  appliedConfiguration: number;
+  savedProgression: Progression;
   config: {
     master: number; beat: number; carrier: number; mode: SoundSettings['mode'];
     binauralMode: 'difference' | 'individual'; leftFrequency: number; rightFrequency: number;
@@ -29,5 +32,5 @@ export type EngineState = {
   generating: boolean; chordStatus: string;
   pipeline: { enabled: boolean; playing: string | null; ready: string[]; generating: string | null };
 };
-export type EngineMessage = EngineState | { type: 'ready' } | { type: 'error'; message: string };
+export type EngineMessage = EngineState | { type: 'ready' } | { type: 'error'; message: string; configurationRequest?: number } | { type: 'noiseMuted' };
 export type AudioHostProps = { commandRef: { current: ((command: AudioCommand) => void) | null }; onMessage: (message: EngineMessage) => void };
