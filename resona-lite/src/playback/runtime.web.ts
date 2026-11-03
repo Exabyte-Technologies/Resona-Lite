@@ -4,5 +4,3 @@ export async function initializePlayback(_onAction: (action: PlaybackAction, exp
 export async function activatePlayback() {}
 export async function updatePlayback(_card: PlaybackCard, _session: boolean) {}
 export async function disposePlayback() {}
-
-export async function liveActivitiesEnabled() { return false; }

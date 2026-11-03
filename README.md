@@ -43,10 +43,10 @@ Below **Choose a mood**, set a sleep timer for 15, 30, 45, 60 or 90 minutes.
 A countdown shows how long is left. It stops all sound tracks, including noise and
 chord playback. Choose **Off** or **Cancel timer** to keep listening.
 
-While a soundscape plays, iPhone shows a branded Live Activity and lock-screen
-playback controls. Android shows a media notification. Pause, play, stop or add
-**+15 min** to your sleep timer from these controls. Sound continues when you
-switch apps or lock your phone. Closing the app completely ends the session.
+While a soundscape plays, iPhone shows lock-screen playback controls and Android
+shows a media notification. Pause, play or stop from these controls; the Android
+notification also lets you add **+15 min** to your sleep timer. Sound continues
+when you switch apps or lock your phone. Closing the app completely ends the session.
 
 ## Make it your own
 
@@ -88,8 +88,8 @@ npm start
 ```
 
 Use `npm run ios` or `npm run android` for a native build. Existing development
-installs need a fresh native build for background playback, widgets and notifications.
-Live Activities are unavailable in Expo Go; use a development or EAS build.
+installs need a fresh native build for background playback and notifications.
+Background playback is unavailable in Expo Go; use a development or EAS build.
 
 ### Checks
 
@@ -118,17 +118,12 @@ See the [audio parity notes](resona-lite/docs/audio-parity.md) for the compariso
 verification details, and [upstream attribution](resona-lite/src/engine/vendor/PROVENANCE.md)
 for the original engine and model sources.
 
-### Native playback surfaces
+### Background playback
 
-`expo-widgets` generates an iOS WidgetKit extension (`com.resona.lite.ExpoWidgetsTarget`)
-with the shared app group `group.com.resona.lite`. EAS must provision both the app
-and extension with this group. The activity copies its logo into the shared widget
-folder. iOS playback uses the native playback audio session and background audio mode;
+iOS playback uses the native playback audio session and background audio mode;
 Android uses a foreground media service and a monochrome notification icon. Both
 platforms route media controls into the original Web Audio engine in the persistent
-WebView. Live Activity controls open the app on iOS 16.4 and when playback is paused,
-since iOS may suspend an app that is no longer producing audio. No push server or
-account is used.
+WebView. No push server or account is used.
 
 The original engine's audio clock and chords advanced while hidden in an iOS
 simulator probe. For a phone check, build and install the iOS `preview` profile
@@ -139,10 +134,9 @@ npx eas-cli@latest build --platform ios --profile preview
 ```
 
 Start a soundscape, then lock the phone or switch apps. Check that the audio
-continues and the Live Activity appears. Tap **+15 min**, **Pause**, **Play** and
-**Stop** to check that each action updates both the soundscape and the card. On
-Android, repeat the check with the media notification. Force-quitting ends the
-session.
+continues and verify **Pause**, **Play** and **Stop** from the iOS lock-screen
+controls. On Android, repeat the check with the media notification and verify
+**+15 min** timer extension. Force-quitting ends the session.
 
 The sleep timer uses an absolute deadline and checks expiry before audio resumes.
 Its bridge also cancels pending noise restarts and continuous chord generation when

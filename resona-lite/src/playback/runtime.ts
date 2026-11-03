@@ -4,7 +4,7 @@ import type { PlaybackAction, PlaybackCard } from './types';
 
 type NativeAction = { action: PlaybackAction; expired: boolean };
 type NativePlayback = {
-  liveActivitiesEnabled?: () => Promise<boolean>; configure: () => Promise<void>; activate: () => Promise<void>; update: (json: string) => Promise<void>; dispose: () => Promise<void>;
+  configure: () => Promise<void>; activate: () => Promise<void>; update: (json: string) => Promise<void>; dispose: () => Promise<void>;
   drainActions: () => Promise<NativeAction[]>;
   addListener: (event: 'onPlaybackAction', listener: (event: NativeAction) => void) => { remove: () => void };
 };
@@ -49,5 +49,3 @@ export async function updatePlayback(card: PlaybackCard, session: boolean) {
 export async function disposePlayback() {
   if (native) await enqueue(() => native.dispose());
 }
-
-export async function liveActivitiesEnabled() { return Boolean(await native?.liveActivitiesEnabled?.()); }

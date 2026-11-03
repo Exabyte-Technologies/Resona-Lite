@@ -2,7 +2,6 @@ import ExpoModulesCore
 import AVFAudio
 import MediaPlayer
 import UIKit
-import ActivityKit
 
 public final class ResonaPlaybackModule: Module {
   private var observing = false
@@ -20,7 +19,6 @@ public final class ResonaPlaybackModule: Module {
     Events("onPlaybackAction")
     OnStartObserving { self.observing = true }
     OnStopObserving { self.observing = false }
-    AsyncFunction("liveActivitiesEnabled") { ActivityAuthorizationInfo().areActivitiesEnabled }.runOnQueue(.main)
     AsyncFunction("configure") { try self.configure() }.runOnQueue(.main)
     AsyncFunction("activate") { try AVAudioSession.sharedInstance().setActive(true) }.runOnQueue(.main)
     AsyncFunction("drainActions") { () -> [[String: Any]] in

@@ -1,24 +1,21 @@
 import { useState } from 'react';
-import { Modal, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { Modal, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LANGUAGES, LocalizedText as Text, useLanguage } from '../i18n';
 import { tabletModalOrientations } from '../layout';
 import { MotionPressable, useReducedMotion } from '../motion';
-import { usePlayer } from '../player-context';
 import { useThemeColors } from '../theme';
 import AccessibilitySettings from './AccessibilitySettings';
 import BlurBackdrop from './BlurBackdrop';
 import Icon from './Icon';
 import { LanguageOptions } from './LanguagePicker';
-import Panel from './Panel';
 import { TutorialCard } from './Tutorial';
 
 type Page = 'settings' | 'language' | 'tour';
 
 export default function SettingsDialog({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const [page, setPage] = useState<Page>('settings');
-  const { playbackControls } = usePlayer();
-  const { language, t, rtl } = useLanguage();
+  const { language, rtl } = useLanguage();
   const colors = useThemeColors();
   const reduceMotion = useReducedMotion();
   const insets = useSafeAreaInsets();
@@ -44,21 +41,6 @@ export default function SettingsDialog({ visible, onClose }: { visible: boolean;
           </View>
           <ScrollView key={page} contentContainerStyle={styles.body}>
             {page === 'language' ? <LanguageOptions /> : <>
-              {playbackControls.supported && <Panel title="Live Activities" icon="waves" compact>
-                <View style={styles.row}>
-                  <Text style={[styles.label, styles.flex, { color: colors.ink }]}>Show on Lock Screen</Text>
-                  <Switch
-                    accessibilityLabel={t('Show on Lock Screen')}
-                    value={playbackControls.enabled}
-                    disabled={!playbackControls.ready}
-                    onValueChange={playbackControls.setEnabled}
-                    ios_backgroundColor={colors.controlBorder}
-                    trackColor={{ false: colors.controlBorder, true: colors.accent }}
-                    thumbColor={playbackControls.enabled ? colors.accentInk : colors.surface}
-                  />
-                </View>
-                {playbackControls.error && <Text accessibilityLiveRegion="polite" style={{ color: colors.muted }}>{playbackControls.error}</Text>}
-              </Panel>}
               <AccessibilitySettings />
               <View style={[styles.links, { backgroundColor: colors.surface, borderColor: colors.line }]}>
                 <MotionPressable accessibilityRole="button" onPress={() => setPage('language')} style={styles.link}>
@@ -86,7 +68,6 @@ const styles = StyleSheet.create({
   title: { flex: 1, fontSize: 23, fontWeight: '700' },
   action: { minHeight: 44, maxWidth: '40%', paddingHorizontal: 4, justifyContent: 'center' },
   body: { padding: 16, gap: 12 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 44 },
   flex: { flex: 1 },
   label: { fontSize: 15, fontWeight: '600' },
   links: { borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },

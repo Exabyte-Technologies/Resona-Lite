@@ -32,50 +32,6 @@
     "設定",
     "設定"
   ],
-  "Live Activities": [
-    "实时活动",
-    "Actividades en vivo",
-    "लाइव गतिविधियाँ",
-    "الأنشطة المباشرة",
-    "Atividades ao Vivo",
-    "Activités en direct",
-    "Активности в реальном времени",
-    "ライブアクティビティ",
-    "即時動態"
-  ],
-  "Show on Lock Screen": [
-    "在锁定屏幕上显示",
-    "Mostrar en la pantalla de bloqueo",
-    "लॉक स्क्रीन पर दिखाएँ",
-    "إظهار على شاشة القفل",
-    "Mostrar na tela bloqueada",
-    "Afficher sur l’écran verrouillé",
-    "Показывать на экране блокировки",
-    "ロック画面に表示",
-    "在鎖定畫面顯示"
-  ],
-  "Allow Live Activities for Resona Lite in Settings.": [
-    "请在设置中允许 Resona Lite 使用实时活动。",
-    "Permite las actividades en vivo de Resona Lite en Ajustes.",
-    "सेटिंग में Resona Lite के लिए लाइव गतिविधियाँ चालू करें।",
-    "اسمح بالأنشطة المباشرة لتطبيق Resona Lite من الإعدادات.",
-    "Permita Atividades ao Vivo para Resona Lite nos Ajustes.",
-    "Autorisez les activités en direct pour Resona Lite dans Réglages.",
-    "Разрешите Live Activity для Resona Lite в настройках.",
-    "設定で Resona Lite のライブアクティビティを許可してください。",
-    "請在「設定」中允許 Resona Lite 使用即時動態。"
-  ],
-  "Playback controls are unavailable.": [
-    "播放控制不可用。",
-    "Los controles de reproducción no están disponibles.",
-    "प्लेबैक नियंत्रण उपलब्ध नहीं हैं।",
-    "عناصر التحكم في التشغيل غير متاحة.",
-    "Os controles de reprodução estão indisponíveis.",
-    "Les commandes de lecture sont indisponibles.",
-    "Управление воспроизведением недоступно.",
-    "再生コントロールを利用できません。",
-    "無法使用播放控制。"
-  ],
   "Rebuild Resona Lite to enable background playback.": [
     "请重新构建 Resona Lite 以启用后台播放。",
     "Vuelve a compilar Resona Lite para activar la reproducción en segundo plano.",
@@ -2078,50 +2034,6 @@
     "+15 分",
     "+15 分鐘"
   ],
-  "Playback controls": [
-    "播放控制",
-    "Controles de reproducción",
-    "प्लेबैक नियंत्रण",
-    "عناصر تشغيل الصوت",
-    "Controles de reprodução",
-    "Commandes de lecture",
-    "Управление воспроизведением",
-    "再生コントロール",
-    "播放控制"
-  ],
-  "Open controls": [
-    "打开控制",
-    "Abrir controles",
-    "नियंत्रण खोलें",
-    "فتح عناصر التحكم",
-    "Abrir controles",
-    "Ouvrir les commandes",
-    "Открыть управление",
-    "コントロールを開く",
-    "開啟控制"
-  ],
-  "Opens Resona Lite to apply your choice.": [
-    "打开 Resona Lite 后应用所选操作。",
-    "Abre Resona Lite para aplicar tu elección.",
-    "आपकी पसंद लागू करने के लिए Resona Lite खुलता है।",
-    "يفتح Resona Lite لتطبيق اختيارك.",
-    "Abre o Resona Lite para aplicar sua escolha.",
-    "Ouvre Resona Lite pour appliquer votre choix.",
-    "Открывает Resona Lite для выполнения действия.",
-    "Resona Lite を開いて操作を実行します。",
-    "開啟 Resona Lite 以執行所選操作。"
-  ],
-  "Enable playback controls": [
-    "启用播放控制",
-    "Activar controles",
-    "प्लेबैक नियंत्रण चालू करें",
-    "تفعيل عناصر التشغيل",
-    "Ativar controles",
-    "Activer les commandes",
-    "Включить управление",
-    "再生コントロールを有効にする",
-    "啟用播放控制"
-  ],
   "Audio could not be prepared:": [
     "声音准备失败：",
     "No se pudo preparar el audio:",
@@ -2165,17 +2077,6 @@
     "Гц",
     "Hz",
     "Hz"
-  ],
-  "Disable playback controls": [
-    "关闭播放控件",
-    "Desactivar controles de reproducción",
-    "प्लेबैक नियंत्रण बंद करें",
-    "تعطيل عناصر التحكم بالتشغيل",
-    "Desativar controles de reprodução",
-    "Désactiver les commandes de lecture",
-    "Отключить управление воспроизведением",
-    "再生コントロールを無効にする",
-    "關閉播放控制"
   ],
   "Local audio engine": [
     "本地音频引擎",

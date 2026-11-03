@@ -11,7 +11,6 @@ import { DEFAULT_SETTINGS, type SoundSettings } from './model';
 type PlayerContextValue = {
   sleepDeadline: number | null; sleepRemaining: number; sleepFinished: boolean;
   setSleepTimer: (minutes: number | null) => void;
-  playbackControls: ReturnType<typeof usePlaybackControls>;
   settings: SoundSettings;
   binauralPlaying: boolean; ambientPlaying: boolean; noisePlaying: boolean;
   audioReady: boolean; audioError: string | null; engineState: EngineState | null;
@@ -59,7 +58,7 @@ export function PlayerProvider({ children }: PropsWithChildren) {
   },[audioReady,command,setSleepTimer]);
   useEffect(()=>{if(audioReady&&pendingAction.current){const event=pendingAction.current;pendingAction.current=null;handleAction(event.action,event.expired);}},[audioReady,handleAction]);
   const anyPlaying=Boolean(engineState?.playing||engineState?.ambientPlaying||engineState?.noisePlaying);
-  const playbackControls=usePlaybackControls({playing:anyPlaying,mood:settings.mode[0].toUpperCase()+settings.mode.slice(1),deadline:sleepDeadline,onAction:handleAction,session:controlsSession});
+  usePlaybackControls({playing:anyPlaying,mood:settings.mode[0].toUpperCase()+settings.mode.slice(1),deadline:sleepDeadline,onAction:handleAction,session:controlsSession});
   useEffect(() => {
     const subscription = AppState.addEventListener('change', state => {
       // Leaving the foreground must not suspend an actively playing soundscape.
@@ -93,7 +92,7 @@ export function PlayerProvider({ children }: PropsWithChildren) {
     else command('setAmbient', key, value);
   }, [command]);
   return (
-    <PlayerContext.Provider value={{ sleepDeadline,sleepRemaining,sleepFinished,setSleepTimer,playbackControls,settings, audioReady, audioError, engineState,
+    <PlayerContext.Provider value={{ sleepDeadline,sleepRemaining,sleepFinished,setSleepTimer,settings, audioReady, audioError, engineState,
       binauralPlaying:engineState?.playing ?? false, ambientPlaying:engineState?.ambientPlaying ?? false, noisePlaying:engineState?.noisePlaying ?? false,
       command, updateSetting, chooseMode:mode => command('applyMode', mode),
       toggleSession:() => command('toggleSession'), toggleBinaural:() => command('toggle'), toggleAmbient:() => command('toggleAmbient'), toggleNoise:() => command('toggleNoise'),
