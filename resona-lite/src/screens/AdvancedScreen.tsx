@@ -5,6 +5,8 @@ import { MotionPressable, SelectionWash } from '../motion';
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import AudioErrorNotice from '../components/AudioErrorNotice';
+import AccessibilitySettings from '../components/AccessibilitySettings';
+import { useAccessibilitySettings } from '../accessibility';
 import Icon, { type IconName } from '../components/Icon';
 import Panel from '../components/Panel';
 import RangeControl from '../components/RangeControl';
@@ -65,7 +67,9 @@ export default function AdvancedScreen({
   onToggleNoise,
 }: Props) {
   const colors = useThemeColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { spacious } = useAccessibilitySettings();
+  const styles = useMemo(() => createStyles(colors, spacious), [colors, spacious]);
+  const [accessibilityVisible, setAccessibilityVisible] = useState(false);
   const [focusedBand, setFocusedBand] = useState<number | null>(null);
   const openTutorial = useTutorial();
   const openLanguage=useLanguagePicker();
@@ -73,12 +77,12 @@ export default function AdvancedScreen({
 
   return (
     <>
-      {audioError ? <AudioErrorNotice message={audioError} /> : null}
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
+        {audioError ? <AudioErrorNotice message={audioError} /> : null}
         <View style={styles.intro}>
           <Text style={styles.title}>Fine-tune your sound</Text>
           <Text style={styles.description}>Rhythm, texture, tone and balance.</Text>
@@ -117,6 +121,7 @@ export default function AdvancedScreen({
                   <Text style={[styles.bandFrequency, selected && styles.selectedText]}>
                     {band.hz} Hz
                   </Text>
+                  {selected && <Icon name="check" size={16} />}
                 </MotionPressable>
               );
             })}
@@ -256,13 +261,17 @@ export default function AdvancedScreen({
         </Panel>
         <View style={styles.footerLinks}>
         <MotionPressable accessibilityRole="button" accessibilityLabel="Replay quick tour" onPress={openTutorial} style={styles.tourLink}>
-          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[styles.tourLinkText, { color:colors.muted }]}>Quick tour</Text>
+          <Text style={[styles.tourLinkText, { color:colors.muted }]}>Quick tour</Text>
         </MotionPressable>
         <MotionPressable accessibilityRole="button" onPress={openLanguage} style={styles.tourLink}>
-          <Icon name="language" size={16}/><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[styles.tourLinkText,{color:colors.muted}]}>Change language</Text>
+          <Icon name="language" size={16}/><Text style={[styles.tourLinkText,{color:colors.muted}]}>Change language</Text>
         </MotionPressable>
         </View>
+        <MotionPressable accessibilityRole="button" onPress={() => setAccessibilityVisible(true)} style={styles.accessibilityButton}>
+          <Text style={styles.accessibilityLabel}>Accessibility</Text>
+        </MotionPressable>
       </ScrollView>
+      <AccessibilitySettings visible={accessibilityVisible} onClose={() => setAccessibilityVisible(false)} />
     </>
   );
 }
@@ -283,7 +292,8 @@ function PlaybackControl({
   onPress: () => void;
 }) {
   const colors = useThemeColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { spacious } = useAccessibilitySettings();
+  const styles = useMemo(() => createStyles(colors, spacious), [colors, spacious]);
   const [focused, setFocused] = useState(false);
 
   return (
@@ -309,7 +319,7 @@ function PlaybackControl({
           isPlaying && styles.playButtonActive,
           !audioReady && styles.playButtonDisabled,
           focused && styles.focused,
-          pressed && audioReady && styles.playButtonPressed,
+          pressed && audioReady && styles.playButtonActive,
         ]}
       >
         <Icon name={isPlaying ? 'waves' : icon} color={colors.accentInk} size={15} />
@@ -333,7 +343,8 @@ function NoiseChoice({
   onPress: () => void;
 }) {
   const colors = useThemeColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { spacious } = useAccessibilitySettings();
+  const styles = useMemo(() => createStyles(colors, spacious), [colors, spacious]);
   const [focused, setFocused] = useState(false);
 
   return (
@@ -360,6 +371,7 @@ function NoiseChoice({
         </Text>
         <Text style={styles.noiseDescription}>{noise.description}</Text>
       </View>
+      {selected && <Icon name="check" size={16} />}
     </MotionPressable>
   );
 }
@@ -368,11 +380,13 @@ function capitalize(noise: NoiseType) {
   return noise.charAt(0).toUpperCase() + noise.slice(1);
 }
 
-function createStyles(colors: ThemeColors) {
+function createStyles(colors: ThemeColors, spacious: boolean) {
   return StyleSheet.create({
-    footerLinks:{flexDirection:'row',alignItems:'center',justifyContent:'center',gap:16,marginTop:8},
-    tourLink:{ flex:1, minHeight:44, flexDirection:'row',gap:6,alignItems:'center', justifyContent:'center' },
+    footerLinks:{flexDirection:spacious?'column':'row',alignItems:'stretch',justifyContent:'center',gap:spacious?4:16,marginTop:8},
+    tourLink:{ flexGrow:1, flexBasis:spacious?'auto':0, minHeight:44, flexDirection:'row',gap:6,alignItems:'center', justifyContent:'center' },
     tourLinkText:{ fontFamily:fonts.body, fontSize:12,flexShrink:1, textDecorationLine:'underline' },
+    accessibilityButton: { minHeight: 44, alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: 12, borderWidth: 1, borderColor: colors.controlBorder, backgroundColor: colors.surface },
+    accessibilityLabel: { fontSize: 14, fontWeight: '600', color: colors.ink, textAlign: 'center' },
     content: {
       paddingHorizontal: spacing.page,
       paddingTop: spacing.sm,
@@ -409,7 +423,7 @@ function createStyles(colors: ThemeColors) {
       gap: spacing.xs,
     },
     bandButton: {
-      width: '48%',
+      width: spacious ? '100%' : '48%',
       minHeight: 52,
       flexDirection: 'row',
       alignItems: 'center',
@@ -419,7 +433,7 @@ function createStyles(colors: ThemeColors) {
       paddingVertical: spacing.xs,
       borderRadius: 13,
       borderWidth: 1,
-      borderColor: colors.line,
+      borderColor: colors.controlBorder,
       backgroundColor: colors.surfaceSubtle,
     },
     gammaBand: {
@@ -429,7 +443,7 @@ function createStyles(colors: ThemeColors) {
       borderColor: colors.selectedBorder,
     },
     bandButtonPressed: {
-      opacity: 0.78,
+      backgroundColor: colors.surfaceSelected,
     },
     focused: {
       borderWidth: 2,
@@ -454,6 +468,7 @@ function createStyles(colors: ThemeColors) {
       fontSize: 11,
     },
     bandFrequency: {
+      flexShrink: 1,
       color: colors.muted,
       fontFamily: fonts.body,
       fontSize: 12,
@@ -466,7 +481,7 @@ function createStyles(colors: ThemeColors) {
       rowGap: spacing.xs,
     },
     mixerTile: {
-      width: '31.6%',
+      width: spacious ? '100%' : '31.6%',
       minHeight: 96,
       justifyContent: 'center',
       paddingHorizontal: spacing.xs,
@@ -478,8 +493,8 @@ function createStyles(colors: ThemeColors) {
     },
     playback: {
       minHeight: 44,
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: spacious ? 'column' : 'row',
+      alignItems: spacious ? 'stretch' : 'center',
       justifyContent: 'space-between',
       gap: spacing.xs,
       paddingTop: spacing.xxs,
@@ -501,7 +516,8 @@ function createStyles(colors: ThemeColors) {
     },
     playButton: {
       minWidth: 132,
-      minHeight: 40,
+      minHeight: 44,
+      maxWidth: '100%',
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
@@ -516,10 +532,8 @@ function createStyles(colors: ThemeColors) {
     playButtonDisabled: {
       opacity: 0.55,
     },
-    playButtonPressed: {
-      transform: [{ scale: 0.98 }],
-    },
     playButtonText: {
+      flexShrink: 1,
       color: colors.accentInk,
       fontFamily: fonts.body,
       fontSize: 12,
@@ -534,7 +548,7 @@ function createStyles(colors: ThemeColors) {
       gap: spacing.xs,
     },
     noiseChoice: {
-      width: '48%',
+      width: spacious ? '100%' : '48%',
       minHeight: 56,
       flexDirection: 'row',
       alignItems: 'center',
@@ -543,14 +557,14 @@ function createStyles(colors: ThemeColors) {
       paddingVertical: spacing.xs,
       borderRadius: 12,
       borderWidth: 1,
-      borderColor: colors.line,
+      borderColor: colors.controlBorder,
       backgroundColor: colors.surfaceSubtle,
     },
     noiseChoiceSelected: {
       borderColor: colors.selectedBorder,
     },
     noiseChoicePressed: {
-      opacity: 0.78,
+      backgroundColor: colors.surfaceSelected,
     },
     noiseIcon: {
       width: 28,

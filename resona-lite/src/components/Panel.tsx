@@ -43,6 +43,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   title: {
+    flexShrink: 1,
     fontFamily: fonts.display,
     fontSize: 19,
     fontWeight: '600',

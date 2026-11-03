@@ -1,4 +1,5 @@
-import { Image, StyleSheet, View, Text } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
+import { LocalizedText as Text } from '../i18n';
 import { useThemeColors } from '../theme';
 export default function Brand({ size=28, light=false }: { size?:number; light?:boolean }) {
  const c=useThemeColors();

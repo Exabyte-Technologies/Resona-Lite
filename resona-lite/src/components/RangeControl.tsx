@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Slider from '@react-native-community/slider';
 import { StyleSheet, View } from 'react-native';
 import { fonts, spacing, useThemeColors } from '../theme';
+import { useAccessibilitySettings } from '../accessibility';
 
 type Props = {
   title: string;
@@ -30,6 +31,7 @@ export default function RangeControl({
   onChange,
 }: Props) {
   const colors = useThemeColors();
+  const { spacious } = useAccessibilitySettings();
   const {t}=useLanguage();
   const [draftValue, setDraftValue] = useState(value);
   const [isSliding, setIsSliding] = useState(false);
@@ -41,7 +43,7 @@ export default function RangeControl({
       compact && styles.compactControl,
       grid && styles.gridControl,
     ]}>
-      <View style={[styles.heading, grid && styles.gridHeading]}>
+      <View style={[styles.heading, grid && styles.gridHeading, spacious && styles.stackedHeading]}>
         <View style={styles.copy}>
           <Text style={[
             styles.title,
@@ -80,8 +82,8 @@ export default function RangeControl({
           step={step}
           value={value}
           minimumTrackTintColor={colors.accent}
-          maximumTrackTintColor={colors.line}
-          thumbTintColor={colors.accent}
+          maximumTrackTintColor={colors.controlBorder}
+          thumbTintColor={colors.ink}
           onValueChange={(nextValue) => {
             setDraftValue(nextValue);
             setIsSliding(true);
@@ -130,6 +132,11 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     gap: 2,
   },
+  stackedHeading: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: 4,
+  },
   copy: {
     flex: 1,
     gap: 3,
@@ -160,6 +167,7 @@ const styles = StyleSheet.create({
     lineHeight: 14,
   },
   value: {
+    flexShrink: 1,
     minWidth: 52,
     fontFamily: fonts.body,
     fontSize: 14,

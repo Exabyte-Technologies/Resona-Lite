@@ -2,6 +2,7 @@ import { StyleSheet, View } from 'react-native';
 import { useThemeColors } from '../theme';
 
 export type IconName =
+  | 'check'
   | 'language'
   | 'home'
   | 'tune'
@@ -32,6 +33,10 @@ export default function Icon({ name, color, size = 22 }: Props) {
     backgroundColor: stroke,
     borderRadius: scaled(2),
   };
+
+  if (name === 'check') return <View accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: size, height: size, justifyContent: 'center', alignItems: 'center' }}>
+    <View style={{ width: size * 0.68, height: size * 0.38, borderBottomWidth: 2, borderLeftWidth: 2, borderColor: stroke, transform: [{ rotate: '-45deg' }] }} />
+  </View>;
 
   if (name === 'language') return <View accessible={false} style={{width:size,height:size,alignItems:'center',justifyContent:'center'}}>
     <View style={{width:size*0.82,height:size*0.82,borderRadius:size/2,borderWidth:1.4,borderColor:stroke}}/>

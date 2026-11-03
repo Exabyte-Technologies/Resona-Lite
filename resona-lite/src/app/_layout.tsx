@@ -1,10 +1,12 @@
 import { HomeQuoteProvider } from '../quotes';
-import { LanguageProvider, useLanguage } from '../i18n';
+import { LanguageProvider, LocalizedText as Text, useLanguage } from '../i18n';
 import { StartupProvider } from '../startup';
 import Brand from '../components/Brand';
 import { Tabs } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Easing, StyleSheet, View, useColorScheme } from 'react-native';
+import { Easing, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { AccessibilityProvider, useAccessibilitySettings, useAppColorScheme } from '../accessibility';
 import Icon from '../components/Icon';
 import { PlayerProvider } from '../player-context';
 import { useThemeColors } from '../theme';
@@ -13,29 +15,32 @@ import { TutorialProvider } from '../tutorial-context';
 import { BlurBackdropProvider } from '../components/BlurBackdrop';
 
 export default function RootLayout() {
-  const scheme = useColorScheme() ?? 'light';
-
   return (
+    <AccessibilityProvider>
     <LanguageProvider>
     <HomeQuoteProvider>
-    <StartupProvider>
     <MotionProvider>
+    <StartupProvider>
       <BlurBackdropProvider>
         <TutorialProvider>
           <PlayerProvider>
-            <AppTabs isDark={scheme === 'dark'} />
+            <AppTabs />
           </PlayerProvider>
         </TutorialProvider>
       </BlurBackdropProvider>
-    </MotionProvider>
     </StartupProvider>
+    </MotionProvider>
     </HomeQuoteProvider>
     </LanguageProvider>
+    </AccessibilityProvider>
   );
 }
 
-function AppTabs({ isDark }: { isDark: boolean }) {
+function AppTabs() {
   const colors = useThemeColors();
+  const isDark = useAppColorScheme() === 'dark';
+  const { fontScale, spacious } = useAccessibilitySettings();
+  const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
   const {t,rtl}=useLanguage();
 
@@ -43,12 +48,12 @@ function AppTabs({ isDark }: { isDark: boolean }) {
     <View style={[styles.container, { backgroundColor: colors.background,direction:rtl?'rtl':'ltr' }]}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <Tabs
-        screenOptions={{
+        screenOptions={({ route }) => ({
           animation: reduceMotion ? 'none' : 'fade',
           transitionSpec: { animation:'timing', config:{ duration:260, easing:Easing.inOut(Easing.cubic) } },
           headerTitle: () => <Brand/>,
           headerTitleAlign: 'left',
-          headerStyle: { backgroundColor: colors.background },
+          headerStyle: { backgroundColor: colors.background, height: insets.top + Math.max(48, Math.ceil(30 * fontScale + 12)) },
           headerShadowVisible: false,
           sceneStyle: { backgroundColor: colors.background },
           tabBarStyle: [
@@ -56,19 +61,24 @@ function AppTabs({ isDark }: { isDark: boolean }) {
             {
               backgroundColor: colors.background,
               borderTopColor: colors.line,
+              height: Math.max(72, insets.bottom + 22 + Math.ceil((spacious ? 31 : 16) * fontScale)),
             },
           ],
+          tabBarLabelPosition: 'below-icon',
           tabBarActiveTintColor: colors.accent,
           tabBarInactiveTintColor: colors.dim,
-          tabBarLabelStyle: styles.tabLabel,
+          tabBarLabel: ({ focused, color }) => (
+            <Text style={[styles.tabLabel, { color }, focused && styles.activeLabel]}>
+              {route.name === 'index' ? 'Home' : 'Advanced'}
+            </Text>
+          ),
           tabBarItemStyle: styles.tabItem,
-        }}
+        })}
       >
         <Tabs.Screen
           name="index"
           options={{
             title: t('Home'),
-            tabBarLabel: t('Home'),
             tabBarAccessibilityLabel: t('Home'),
             tabBarIcon: ({ color }) => <Icon name="home" color={String(color)} size={21} />,
           }}
@@ -77,7 +87,6 @@ function AppTabs({ isDark }: { isDark: boolean }) {
           name="advanced"
           options={{
             title: t('Advanced'),
-            tabBarLabel: t('Advanced'),
             tabBarAccessibilityLabel: t('Advanced controls'),
             tabBarIcon: ({ color }) => <Icon name="tune" color={String(color)} size={21} />,
           }}
@@ -92,7 +101,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   tabBar: {
-    height: 72,
     paddingTop: 4,
     paddingBottom: 4,
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -103,5 +111,8 @@ const styles = StyleSheet.create({
   tabLabel: {
     fontSize: 12,
     fontWeight: '500',
+    textAlign: 'center',
+    flexShrink: 1,
   },
+  activeLabel: { fontWeight: '700', textDecorationLine: 'underline' },
 });

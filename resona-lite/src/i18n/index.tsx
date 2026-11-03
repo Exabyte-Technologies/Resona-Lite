@@ -1,5 +1,6 @@
 import { Children, createContext, useCallback, useContext, useEffect, useMemo, useState, type PropsWithChildren } from 'react';
-import { Text as NativeText, type TextProps } from 'react-native';
+import { StyleSheet, Text as NativeText, type TextProps } from 'react-native';
+import { useAccessibilitySettings } from '../accessibility';
 import { isLanguage, translate, type Language, type Parameters } from './core';
 import { readLanguage, writeLanguage } from './storage';
 export { LANGUAGES, type Language } from './core';
@@ -18,5 +19,11 @@ export function LanguageProvider({ children }: PropsWithChildren) {
 export const useLanguage=()=>useContext(LocaleContext);
 export function LocalizedText({ children,style,accessibilityLabel,...props }: TextProps) {
   const { t,rtl }=useLanguage();
-  return <NativeText {...props} accessibilityLabel={accessibilityLabel?t(accessibilityLabel):undefined} style={[{writingDirection:rtl?'rtl':'ltr'},style]}>{Children.map(children,child=>typeof child==='string'?t(child):child)}</NativeText>;
+  const { textMultiplier } = useAccessibilitySettings();
+  const base = StyleSheet.flatten(style);
+  const textSize = textMultiplier > 1 ? {
+    fontSize: (base?.fontSize ?? 14) * textMultiplier,
+    lineHeight: base?.lineHeight === undefined ? undefined : base.lineHeight * textMultiplier,
+  } : undefined;
+  return <NativeText {...props} accessibilityLabel={accessibilityLabel?t(accessibilityLabel):undefined} style={[{writingDirection:rtl?'rtl':'ltr'},style,textSize]}>{Children.map(children,child=>typeof child==='string'?t(child):child)}</NativeText>;
 }

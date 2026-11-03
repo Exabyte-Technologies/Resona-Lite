@@ -12,6 +12,7 @@ import {
 import type { Mode, SoundSettings } from '../model';
 import { MODES } from '../model';
 import AudioErrorNotice from '../components/AudioErrorNotice';
+import { useAccessibilitySettings } from '../accessibility';
 import Icon, { type IconName } from '../components/Icon';
 import RangeControl from '../components/RangeControl';
 import Panel from '../components/Panel';
@@ -53,19 +54,20 @@ export default function HomeScreen({
 }: Props) {
   const { quote } = useHomeQuote();
   const colors = useThemeColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { spacious } = useAccessibilitySettings();
+  const styles = useMemo(() => createStyles(colors, spacious), [colors, spacious]);
   const [playFocused, setPlayFocused] = useState(false);
   const [balanceVisible, setBalanceVisible] = useState(false);
   const [focusedMode, setFocusedMode] = useState<Mode | null>(null);
 
   return (
     <>
-      {audioError ? <AudioErrorNotice message={audioError} /> : null}
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
+        {audioError ? <AudioErrorNotice message={audioError} /> : null}
         <View style={styles.intro}>
           <View style={styles.eyebrow}>
             <View style={styles.eyebrowMark} />
@@ -109,7 +111,7 @@ export default function HomeScreen({
                 isPlaying && styles.playButtonActive,
                 !audioReady && styles.playButtonDisabled,
                 playFocused && styles.focused,
-                pressed && audioReady && styles.playButtonPressed,
+                pressed && audioReady && styles.playButtonActive,
               ]}
             >
               <PlayGlyph isPlaying={isPlaying} />
@@ -172,7 +174,7 @@ export default function HomeScreen({
                     </Text>
                     <Text style={styles.modeDescription}>{mode.description}</Text>
                   </View>
-                  {selected ? <View style={styles.selectedMark} /> : null}
+                  {selected && <Icon name="check" size={16} />}
                 </MotionPressable>
               );
             })}
@@ -205,6 +207,10 @@ function WaterRings({ isPlaying }: { isPlaying: boolean }) {
     breathe.start();
     return () => breathe.stop();
   }, [isPlaying, progress, reduceMotion]);
+  if (reduceMotion) return <View pointerEvents="none" style={styles.rings}>
+    <View style={[styles.ring, styles.outerRing, styles.stillRing]} />
+    <View style={[styles.ring, styles.innerRing, styles.stillRing]} />
+  </View>;
   return <View pointerEvents="none" style={styles.rings}>
     <Animated.View style={[styles.ring,styles.outerRing, { opacity:activity.interpolate({ inputRange:[0,1],outputRange:[0.35,0.16] }) }]} />
     <Animated.View style={[styles.ring,styles.innerRing, { opacity:activity.interpolate({ inputRange:[0,1],outputRange:[0.35,0.2] }) }]} />
@@ -225,7 +231,7 @@ function PlayGlyph({ isPlaying }: { isPlaying: boolean }) {
   </View>;
 }
 
-function createStyles(colors: ThemeColors) {
+function createStyles(colors: ThemeColors, spacious = false) {
   return StyleSheet.create({
     content: {
       paddingHorizontal: spacing.page,
@@ -250,6 +256,7 @@ function createStyles(colors: ThemeColors) {
       backgroundColor: colors.accent,
     },
     eyebrowText: {
+      flexShrink: 1,
       color: colors.accent,
       fontFamily: fonts.body,
       fontSize: 12,
@@ -276,15 +283,17 @@ function createStyles(colors: ThemeColors) {
       borderColor: colors.selectedIconSurface,
       backgroundColor: colors.surfaceSelected,
     },
-    balanceButton:{ alignSelf:'flex-end', minHeight:44, marginTop:12, paddingHorizontal:12, flexDirection:'row', alignItems:'center', justifyContent:'center', gap:8, backgroundColor:colors.surface, borderRadius:12, borderWidth:StyleSheet.hairlineWidth, borderColor:colors.selectedBorder },
-    balanceButtonText:{ fontFamily:fonts.body, fontSize:13, fontWeight:'600', color:colors.accent },
+    balanceButton:{ alignSelf:'flex-end', minHeight:44, maxWidth:'100%', marginTop:12, paddingHorizontal:12, flexDirection:'row', alignItems:'center', justifyContent:'center', gap:8, backgroundColor:colors.surface, borderRadius:12, borderWidth:1, borderColor:colors.controlBorder },
+    balanceButtonText:{ flexShrink:1, fontFamily:fonts.body, fontSize:13, fontWeight:'600', color:colors.accent },
     playerHeading: {
-      flexDirection: 'row',
+      flexDirection: spacious ? 'column' : 'row',
+      flexWrap: 'wrap',
       alignItems: 'flex-start',
       justifyContent: 'space-between',
       gap: spacing.sm,
     },
     playerCopy: {
+      maxWidth: '100%',
       gap: 5,
     },
     playerTitle: {
@@ -299,6 +308,7 @@ function createStyles(colors: ThemeColors) {
       gap: 4,
     },
     playerHint: {
+      flexShrink: 1,
       color: colors.muted,
       fontFamily: fonts.body,
       fontSize: 12,
@@ -325,6 +335,7 @@ function createStyles(colors: ThemeColors) {
       backgroundColor: colors.accent,
     },
     playState: {
+      flexShrink: 1,
       color: colors.muted,
       fontFamily: fonts.body,
       fontSize: 11,
@@ -378,9 +389,6 @@ function createStyles(colors: ThemeColors) {
       borderWidth: 2,
       borderColor: colors.ink,
     },
-    playButtonPressed: {
-      transform: [{ scale: 0.95 }],
-    },
     playGlyph: {
       width: 0,
       height: 0,
@@ -404,6 +412,7 @@ function createStyles(colors: ThemeColors) {
     },
     playPrompt: {
       alignSelf: 'center',
+      textAlign: 'center',
       color: colors.ink,
       fontFamily: fonts.body,
       fontSize: 14,
@@ -429,7 +438,7 @@ function createStyles(colors: ThemeColors) {
       paddingTop: spacing.xxs,
     },
     modeButton: {
-      width: '48%',
+      width: spacious ? '100%' : '48%',
       minHeight: 72,
       flexDirection: 'row',
       alignItems: 'center',
@@ -438,14 +447,14 @@ function createStyles(colors: ThemeColors) {
       paddingVertical: spacing.xs,
       borderRadius: 14,
       borderWidth: 1,
-      borderColor: colors.line,
+      borderColor: colors.controlBorder,
       backgroundColor: colors.surfaceSubtle,
     },
     modeButtonSelected: {
       borderColor: colors.selectedBorder,
     },
     modeButtonPressed: {
-      opacity: 0.82,
+      backgroundColor: colors.surfaceSelected,
     },
     modeIcon: {
       width: 34,
@@ -475,15 +484,6 @@ function createStyles(colors: ThemeColors) {
       color: colors.dim,
       fontFamily: fonts.body,
       fontSize: 11,
-    },
-    selectedMark: {
-      position: 'absolute',
-      top: 7,
-      right: 7,
-      width: 5,
-      height: 5,
-      borderRadius: 3,
-      backgroundColor: colors.accent,
     },
   });
 }

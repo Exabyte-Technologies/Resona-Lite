@@ -2,6 +2,8 @@ import { LocalizedText as Text, useLanguage } from '../i18n';
 import { MotionPressable, SelectionWash } from '../motion';
 import { useState } from 'react';
 import { StyleSheet, Switch, TextInput, View } from 'react-native';
+import { useAccessibilitySettings, useAppColorScheme } from '../accessibility';
+import Icon from './Icon';
 import Panel from './Panel';
 import RangeControl from './RangeControl';
 import { usePlayer } from '../player-context';
@@ -11,9 +13,14 @@ import type { SoundSettings } from '../model';
 function Choice({ label, selected = false, disabled = false, onPress }: { label: string; selected?: boolean; disabled?: boolean; onPress: () => void }) {
   const colors = useThemeColors();
   return <MotionPressable accessibilityRole="button" accessibilityState={{ selected, disabled }} disabled={disabled} onPress={onPress}
-    style={({ pressed }) => [styles.button, { backgroundColor:colors.surfaceSubtle, borderColor:selected ? colors.accent : colors.line, opacity:disabled ? 0.4 : pressed ? 0.7 : 1 }]}>
+    style={({ pressed }) => [styles.button, {
+      backgroundColor: pressed ? colors.surfaceSelected : colors.surfaceSubtle,
+      borderColor: selected ? colors.accent : colors.controlBorder,
+      borderStyle: disabled ? 'dashed' : 'solid',
+    }]}>
     <SelectionWash selected={selected} color={colors.surfaceSelected} radius={12} />
-    <Text style={{ color:selected ? colors.accent : colors.ink, fontFamily:fonts.body, fontSize:13 }}>{label}</Text>
+    <Text style={{ flexShrink:1, color:disabled ? colors.dim : selected ? colors.accent : colors.ink, fontFamily:fonts.body, fontSize:13 }}>{label}</Text>
+    {selected && <Icon name="check" size={16} />}
   </MotionPressable>;
 }
 
@@ -41,6 +48,8 @@ export function BinauralControls() {
 export function CompositionControls() {
   const { settings:s, updateSetting:set, engineState:e, command, generateChords, audioReady } = usePlayer();
   const colors = useThemeColors();
+  const { textMultiplier } = useAccessibilitySettings();
+  const keyboardAppearance = useAppColorScheme();
   const {t}=useLanguage();
   const [seed, setSeed] = useState('');
   const [length, setLength] = useState(8);
@@ -68,7 +77,7 @@ export function CompositionControls() {
     <Panel title="Chord progression" icon="layers" compact>
       <Text style={{ color:colors.muted }}>The original offline chord model. Starting chords are optional; generation stays on your phone.</Text>
       <Text style={{ color:colors.ink }}>Starting chords</Text>
-      <TextInput accessibilityLabel={t("Starting chords")} placeholder="C Amin F G" placeholderTextColor={colors.dim} autoCapitalize="none" autoCorrect={false} value={seed} onChangeText={setSeed} style={[styles.input,{ color:colors.ink, borderColor:colors.line, backgroundColor:colors.surfaceSubtle }]} />
+      <TextInput accessibilityLabel={t("Starting chords")} placeholder="C Amin F G" placeholderTextColor={colors.dim} keyboardAppearance={keyboardAppearance} autoCapitalize="none" autoCorrect={false} value={seed} onChangeText={setSeed} style={[styles.input,{ fontSize: 16 * textMultiplier, color:colors.ink, borderColor:colors.controlBorder, backgroundColor:colors.surfaceSubtle }]} />
       <RangeControl compact title="Progression length" minimum={2} maximum={32} value={length} onChange={setLength} />
       <RangeControl compact title="Seconds per chord" minimum={2} maximum={120} value={duration} unit=" s" onChange={setDuration} />
       <Text style={{ color:colors.muted }}>Chord transition timing · 0 means instant. Manual tuning keeps its smooth glide.</Text>
@@ -76,11 +85,18 @@ export function CompositionControls() {
       <RangeControl compact title="Binaural chord transition" minimum={0} maximum={4} step={0.1} unit=" s" value={s.binauralChordTransition} onChange={v => set('binauralChordTransition',v)} />
       <RangeControl compact title="Creativity" minimum={0.1} maximum={2} step={0.1} value={temperature} onChange={setTemperature} />
       <RangeControl compact title="Top choices" minimum={1} maximum={100} value={topK} onChange={setTopK} />
-      <View style={styles.switchRow}><Text style={{ color:colors.ink }}>Predictable mode</Text><Switch accessibilityLabel={t("Predictable mode")} value={greedy} onValueChange={setGreedy} /></View>
-      <View style={styles.switchRow}><Text style={{ color:colors.ink }}>Continuous sets</Text><Switch accessibilityLabel={t("Continuous sets")} value={continuous} onValueChange={value => { setContinuous(value); command('continuous',value); }} /></View>
+      <View style={styles.switchRow}><Text style={{ flex:1, color:colors.ink }}>Predictable mode</Text><Switch accessibilityLabel={t("Predictable mode")} value={greedy} onValueChange={setGreedy} /></View>
+      <View style={styles.switchRow}><Text style={{ flex:1, color:colors.ink }}>Continuous sets</Text><Switch accessibilityLabel={t("Continuous sets")} value={continuous} onValueChange={value => { setContinuous(value); command('continuous',value); }} /></View>
       {e?.pipeline.enabled ? <Text accessibilityLiveRegion="polite" style={{ color:colors.accent }}>Playing {e.pipeline.playing ?? '—'} · Ready {e.pipeline.ready.join(', ') || '—'} · Generating {e.pipeline.generating ?? '—'}</Text> : null}
       <View style={styles.row}>
-        {chords.map((chord,index) => <Text key={index} style={[styles.chord,{ color:e?.chordProgressionIndex === index && s.tonalSource === 'generated' ? colors.accent : colors.muted, borderColor:colors.line }]}>{chord.replace(/([A-G])s/g,'$1♯')}</Text>)}
+        {chords.map((chord, index) => {
+          const selected = e?.chordProgressionIndex === index && s.tonalSource === 'generated';
+          const note = chord.replace(/([A-G])s/g, '$1♯');
+          return <View key={index} accessible accessibilityLabel={note} accessibilityState={{ selected }} style={[styles.chord, { borderColor: colors.controlBorder }]}>
+            {selected && <Icon name="check" size={16} />}
+            <Text style={{ color: selected ? colors.accent : colors.ink }}>{note}</Text>
+          </View>;
+        })}
       </View>
       <View style={styles.row}>
         <Choice label={e?.generating ? 'Generating…' : 'Generate & apply'} disabled={!audioReady || e?.generating} onPress={() => generateChords({ seedChords:seed.split(/[\s,]+/).filter(Boolean), length, duration, temperature, topK, greedy, continuous })} />
@@ -98,8 +114,8 @@ export function CompositionControls() {
 }
 const styles = StyleSheet.create({
   row:{ flexDirection:'row', flexWrap:'wrap', gap:8 },
-  button:{ minHeight:44, paddingHorizontal:12, paddingVertical:10, borderRadius:12, borderWidth:1, justifyContent:'center' },
-  input:{ minHeight:48, borderRadius:12, borderWidth:1, paddingHorizontal:12, fontSize:16 },
+  button:{ minHeight:44, maxWidth:'100%', flexDirection:'row', alignItems:'center', gap:8, paddingHorizontal:12, paddingVertical:10, borderRadius:12, borderWidth:1, justifyContent:'center' },
+  input:{ minHeight:48, borderRadius:12, borderWidth:1, paddingHorizontal:12, paddingVertical:8 },
   switchRow:{ flexDirection:'row', justifyContent:'space-between', alignItems:'center', gap:12 },
-  chord:{ borderWidth:1, borderRadius:8, padding:8, fontSize:14 },
+  chord:{ flexDirection:'row', alignItems:'center', gap:6, borderWidth:1, borderRadius:8, padding:8 },
 });

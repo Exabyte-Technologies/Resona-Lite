@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, type PropsWithChildren, type RefObject, type ComponentRef } from 'react';
-import { AccessibilityInfo, Platform, StyleSheet, View, useColorScheme } from 'react-native';
+import { AccessibilityInfo, Platform, StyleSheet, View } from 'react-native';
+import { useAccessibilitySettings, useAppColorScheme } from '../accessibility';
 import { BlurTargetView, BlurView } from 'expo-blur';
 
 const BlurTargetContext = createContext<RefObject<ComponentRef<typeof View> | null> | undefined>(undefined);
@@ -13,7 +14,8 @@ export function BlurBackdropProvider({ children }: PropsWithChildren) {
 
 export default function BlurBackdrop({ intensity = 24 }: { intensity?: number }) {
   const target = useContext(BlurTargetContext);
-  const isDark = useColorScheme() === 'dark';
+  const isDark = useAppColorScheme() === 'dark';
+  const { highContrast } = useAccessibilitySettings();
   const [reduceTransparency, setReduceTransparency] = useState(false);
   useEffect(() => {
     if (Platform.OS !== 'ios') return;
@@ -23,9 +25,10 @@ export default function BlurBackdrop({ intensity = 24 }: { intensity?: number })
     return () => { active = false; subscription.remove(); };
   }, []);
   const androidProps = Platform.OS === 'android' ? { blurTarget:target, blurMethod:'dimezisBlurView' as const } : {};
+  const opaque = reduceTransparency || highContrast;
   return <View pointerEvents="none" accessible={false} style={StyleSheet.absoluteFill}>
-    {!reduceTransparency ? <BlurView {...androidProps} intensity={intensity} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} /> : null}
-    <View style={[StyleSheet.absoluteFill, { backgroundColor:reduceTransparency ? (isDark ? '#101a1c' : '#e2eae5') : 'rgba(8,25,27,0.24)' }]} />
+    {!opaque ? <BlurView {...androidProps} intensity={intensity} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} /> : null}
+    <View style={[StyleSheet.absoluteFill, { backgroundColor:opaque ? (isDark ? '#101a1c' : '#e2eae5') : 'rgba(8,25,27,0.24)' }]} />
   </View>;
 }
 

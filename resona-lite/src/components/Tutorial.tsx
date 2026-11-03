@@ -6,6 +6,7 @@ import Icon, { type IconName } from './Icon';
 import BlurBackdrop from './BlurBackdrop';
 import { MotionPressable, useReducedMotion } from '../motion';
 import { fonts, useThemeColors, type ThemeColors } from '../theme';
+import { useAccessibilitySettings } from '../accessibility';
 
 const steps = [
   { eyebrow:'A little space for you', title:'Find your kind of quiet', description:'On Home, choose Sleep, Meditation, Focus or Awake. Each mood gently tunes your soundscape. You can change it whenever you like.', hint:'No setup needed. Just choose how you want to feel.', icon:'meditation' },
@@ -19,12 +20,20 @@ export default function Tutorial({ visible, showNotice, onClose }: { visible: bo
   const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
+  const { spacious } = useAccessibilitySettings();
   const [step, setStep] = useState(0);
   const [noticeDismissed, setNoticeDismissed] = useState(false);
   const noticeVisible = showNotice && !noticeDismissed;
   const [transitioning, setTransitioning] = useState(false);
   const [progress] = useState(() => new Animated.Value(1));
   useEffect(() => () => progress.stopAnimation(), [progress]);
+  useEffect(() => {
+    if (!reduceMotion) return;
+    progress.stopAnimation(() => {
+      progress.setValue(1);
+      setTransitioning(false);
+    });
+  }, [progress, reduceMotion]);
   const current = steps[step];
   const {t,rtl}=useLanguage();
   const go = (next: number) => {
@@ -67,7 +76,7 @@ export default function Tutorial({ visible, showNotice, onClose }: { visible: bo
         </> : <>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.body}>
             <Animated.View style={{ opacity:progress, transform:[{ translateY:progress.interpolate({ inputRange:[0,1], outputRange:[10,0] }) }] }}>
-              <TutorialArtwork step={step} icon={current.icon} />
+              {!spacious && <TutorialArtwork step={step} icon={current.icon} />}
               <Text style={styles.eyebrow}>{current.eyebrow}</Text>
               <Text accessibilityRole="header" style={styles.title}>{current.title}</Text>
               <Text style={styles.description}>{current.description}</Text>
@@ -77,9 +86,9 @@ export default function Tutorial({ visible, showNotice, onClose }: { visible: bo
           <View style={styles.footer}>
             <View style={styles.progressRow}>
               <Text style={styles.stepText}>{t('Step {{current}} of {{total}}',{current:step+1,total:steps.length})}</Text>
-              <View style={styles.dots}>
+              {!spacious && <View style={styles.dots}>
                 {steps.map((item,index) => <View key={item.title} accessible={false} style={styles.dotTarget}><View style={[styles.dot,index === step && styles.dotActive]} /></View>)}
-              </View>
+              </View>}
             </View>
             <View style={styles.actions}>
               {step > 0 ? <MotionPressable accessibilityRole="button" disabled={transitioning} onPress={() => go(step-1)} style={styles.backButton}><Text style={styles.secondaryText}>Back</Text></MotionPressable> : null}
@@ -109,11 +118,11 @@ function createStyles(c: ThemeColors) {
   return StyleSheet.create({
     backdrop:{ flex:1, paddingHorizontal:20, justifyContent:'center', alignItems:'center' },
     card:{ width:'100%', maxWidth:420, maxHeight:'100%', backgroundColor:c.surface, borderRadius:28, borderWidth:1, borderColor:c.line, overflow:'hidden' },
-    topBar:{ flexDirection:'row', alignItems:'center', justifyContent:'space-between', paddingHorizontal:24, paddingTop:12, gap:8 },
+    topBar:{ flexDirection:'row', flexWrap:'wrap', alignItems:'center', justifyContent:'space-between', paddingHorizontal:24, paddingTop:12, gap:8 },
     brand:{ fontSize:23, fontWeight:'700', letterSpacing:-1, color:c.ink, fontFamily:fonts.body },
     lite:{ fontSize:10, letterSpacing:2, fontWeight:'500', color:c.dim },
-    textButton:{ minHeight:44, paddingHorizontal:4, justifyContent:'center' },
-    body:{ paddingHorizontal:24, paddingBottom:8 },
+    textButton:{ minHeight:44, maxWidth:'100%', paddingHorizontal:4, justifyContent:'center' },
+    body:{ paddingHorizontal:24, paddingTop:8, paddingBottom:8 },
     noticeBody:{ paddingHorizontal:24, paddingTop:20, paddingBottom:16 },
     artwork:{ height:170, alignItems:'center', justifyContent:'center', marginBottom:20, marginTop:8, backgroundColor:c.surfaceSubtle, borderRadius:22, overflow:'hidden' },
     orbitOuter:{ position:'absolute', width:156, height:156, top:-15, borderRadius:80, borderWidth:1, borderColor:c.line },
@@ -140,9 +149,9 @@ function createStyles(c: ThemeColors) {
     dot:{ width:5, height:5, borderRadius:3, backgroundColor:c.line },
     dotActive:{ width:16, backgroundColor:c.accent },
     actions:{ flexDirection:'row', gap:10 },
-    backButton:{ minHeight:50, paddingHorizontal:20, borderRadius:16, borderWidth:1, borderColor:c.line, alignItems:'center', justifyContent:'center' },
-    secondaryText:{ fontSize:13, fontWeight:'500', color:c.muted },
-    nextButton:{ flex:1, minHeight:50, borderRadius:16, alignItems:'center', justifyContent:'center', backgroundColor:c.accent },
-    nextText:{ fontSize:14, fontWeight:'600', color:c.accentInk },
+    backButton:{ minHeight:50, maxWidth:'44%', paddingHorizontal:8, paddingVertical:6, borderRadius:16, borderWidth:1, borderColor:c.controlBorder, alignItems:'center', justifyContent:'center' },
+    secondaryText:{ fontSize:13, fontWeight:'500', color:c.muted, textAlign:'center' },
+    nextButton:{ flex:1, minHeight:50, padding:8, borderRadius:16, alignItems:'center', justifyContent:'center', backgroundColor:c.accent },
+    nextText:{ fontSize:14, fontWeight:'600', color:c.accentInk, textAlign:'center' },
   });
 }

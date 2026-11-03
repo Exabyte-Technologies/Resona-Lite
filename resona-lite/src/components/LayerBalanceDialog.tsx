@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
   heading:{ flexDirection:'row', alignItems:'center', gap:10, paddingLeft:20, paddingRight:12, paddingTop:12 },
   icon:{ width:36, height:36, borderRadius:12, alignItems:'center', justifyContent:'center' },
   title:{ flex:1, fontFamily:fonts.display, fontWeight:'600', fontSize:19 },
-  closeButton:{ minHeight:44, minWidth:50, alignItems:'center', justifyContent:'center' },
+  closeButton:{ minHeight:44, minWidth:50, maxWidth:'45%', alignItems:'center', justifyContent:'center', padding:4 },
   body:{ paddingHorizontal:20, paddingTop:12, paddingBottom:24 },
   description:{ fontFamily:fonts.body, fontSize:14, lineHeight:21, marginBottom:24 },
 });

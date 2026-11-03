@@ -15,8 +15,9 @@ export default function LanguagePicker({ visible, firstLaunch=false, onContinue,
       <View accessibilityViewIsModal style={[styles.card,{backgroundColor:c.surface,borderColor:c.line}]}>
         <View style={styles.heading}><Icon name="language" size={24}/><Text accessibilityRole="header" style={[styles.title,{color:c.ink}]}>Choose your language</Text></View>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.list}>
-          {LANGUAGES.map(item=><MotionPressable key={item.code} accessibilityRole="radio" accessibilityLabel={item.name} accessibilityState={{checked:item.code===language}} onPress={()=>setLanguage(item.code as Language)} style={[styles.language,{borderColor:item.code===language?c.selectedBorder:c.line,backgroundColor:item.code===language?c.surfaceSelected:c.surfaceSubtle}]}>
-            <Text style={{color:c.ink,fontSize:17,writingDirection:item.code==='ar'?'rtl':'ltr'}}>{item.name}</Text><Text style={{color:c.accent}}>{item.code===language?'✓':''}</Text>
+          {LANGUAGES.map(item=><MotionPressable key={item.code} accessibilityRole="radio" accessibilityLabel={item.name} aria-checked={item.code===language} onPress={()=>setLanguage(item.code as Language)} style={[styles.language,{borderColor:item.code===language?c.selectedBorder:c.controlBorder,backgroundColor:item.code===language?c.surfaceSelected:c.surfaceSubtle}]}>
+            <Text style={{flexShrink:1,color:c.ink,fontSize:17,writingDirection:item.code==='ar'?'rtl':'ltr'}}>{item.name}</Text>
+            {item.code===language && <Icon name="check" size={18} />}
           </MotionPressable>)}
         </ScrollView>
         <View style={styles.actions}>
