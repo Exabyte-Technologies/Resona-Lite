@@ -18,6 +18,7 @@ import Icon, { type IconName } from '../components/Icon';
 import RangeControl from '../components/RangeControl';
 import Panel from '../components/Panel';
 import LayerBalanceDialog from '../components/LayerBalanceDialog';
+import ChordProgressionDialog from '../components/ChordProgressionDialog';
 import type { LayerVolumeKey } from '../components/LayerBalanceControls';
 import { fonts, spacing, useThemeColors, type ThemeColors } from '../theme';
 import { MotionEntrance, MotionPressable, SelectionWash, useMotionValue, useReducedMotion } from '../motion';
@@ -59,6 +60,7 @@ export default function HomeScreen({
   const styles = useMemo(() => createStyles(colors, spacious), [colors, spacious]);
   const [playFocused, setPlayFocused] = useState(false);
   const [balanceVisible, setBalanceVisible] = useState(false);
+  const [chordsVisible, setChordsVisible] = useState(false);
   const [focusedMode, setFocusedMode] = useState<Mode | null>(null);
 
   return (
@@ -137,10 +139,16 @@ export default function HomeScreen({
                   onChange={onMasterVolumeChange}
                 />
               </View>
-              <MotionPressable accessibilityRole="button" accessibilityLabel="Open layer balance" onPress={() => setBalanceVisible(true)} style={styles.balanceButton}>
-                <Icon name="balance" size={17} />
-                <Text style={styles.balanceButtonText}>Layer balance</Text>
-              </MotionPressable>
+              <View style={styles.playerActions}>
+                <MotionPressable accessibilityRole="button" accessibilityLabel="Open chord progression" onPress={() => setChordsVisible(true)} style={styles.balanceButton}>
+                  <Icon name="layers" size={17} />
+                  <Text style={styles.balanceButtonText}>Chord progression</Text>
+                </MotionPressable>
+                <MotionPressable accessibilityRole="button" accessibilityLabel="Open layer balance" onPress={() => setBalanceVisible(true)} style={styles.balanceButton}>
+                  <Icon name="balance" size={17} />
+                  <Text style={styles.balanceButtonText}>Layer balance</Text>
+                </MotionPressable>
+              </View>
             </MotionEntrance>
           </View>
           <View style={[cardLayout.group, twoColumns && cardLayout.column]}>
@@ -190,6 +198,7 @@ export default function HomeScreen({
           </View>
         </View>
       </ScrollView>
+      <ChordProgressionDialog visible={chordsVisible} onClose={() => setChordsVisible(false)} />
       <LayerBalanceDialog visible={balanceVisible} onClose={() => setBalanceVisible(false)} settings={settings} onChange={onLayerVolumeChange} />
     </>
   );
@@ -290,7 +299,8 @@ function createStyles(colors: ThemeColors, spacious = false) {
       borderColor: colors.selectedIconSurface,
       backgroundColor: colors.surfaceSelected,
     },
-    balanceButton:{ alignSelf:'flex-end', minHeight:44, maxWidth:'100%', marginTop:12, paddingHorizontal:12, flexDirection:'row', alignItems:'center', justifyContent:'center', gap:8, backgroundColor:colors.surface, borderRadius:12, borderWidth:1, borderColor:colors.controlBorder },
+    playerActions:{ flexDirection:'row', flexWrap:'wrap', justifyContent:'space-between', gap:8, marginTop:12 },
+    balanceButton:{ minHeight:44, maxWidth:'100%', paddingHorizontal:12, flexDirection:'row', alignItems:'center', justifyContent:'center', gap:8, backgroundColor:colors.surface, borderRadius:12, borderWidth:1, borderColor:colors.controlBorder },
     balanceButtonText:{ flexShrink:1, fontFamily:fonts.body, fontSize:13, fontWeight:'600', color:colors.accent },
     playerHeading: {
       flexDirection: spacious ? 'column' : 'row',

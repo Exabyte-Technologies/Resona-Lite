@@ -1,7 +1,7 @@
 import { DEFAULT_SETTINGS, MODES, NOISE_TYPES, type SoundSettings } from './model';
 
 export const DEFAULT_CHORD_EDITOR = {
-  seed: '', length: 8, duration: 4, temperature: 1, topK: 10, greedy: false, continuous: false,
+  seed: '', length: 8, duration: 30, temperature: 1, topK: 10, greedy: false, continuous: true, enabled: true,
 };
 
 export type ChordEditor = typeof DEFAULT_CHORD_EDITOR;
@@ -22,7 +22,7 @@ export type SoundLibrary = {
 export const DEFAULT_CONFIGURATION: SoundConfiguration = {
   sound: DEFAULT_SETTINGS,
   editor: DEFAULT_CHORD_EDITOR,
-  progression: { chords: [], duration: 4 },
+  progression: { chords: [], duration: DEFAULT_CHORD_EDITOR.duration },
 };
 
 export function emptyLibrary(): SoundLibrary {
@@ -58,15 +58,17 @@ export function normalizeConfiguration(value: unknown): SoundConfiguration {
   return {
     sound,
     editor: {
-      seed: typeof editor.seed === 'string' ? editor.seed.slice(0, 256) : '',
+      seed: typeof editor.seed === 'string' ? editor.seed.slice(0, 256) : DEFAULT_CHORD_EDITOR.seed,
       length: Math.round(range(editor.length, 8, 2, 32)),
-      duration: range(editor.duration, 4, 2, 120),
+      duration: range(editor.duration, DEFAULT_CHORD_EDITOR.duration, 2, 120),
       temperature: range(editor.temperature, 1, 0.1, 2),
       topK: Math.round(range(editor.topK, 10, 1, 100)),
       greedy: editor.greedy === true,
-      continuous: editor.continuous === true,
+      continuous: typeof editor.continuous === 'boolean' ? editor.continuous : DEFAULT_CHORD_EDITOR.continuous,
+      enabled: typeof editor.enabled === 'boolean' ? editor.enabled :
+        source.tonalSource === undefined ? DEFAULT_CHORD_EDITOR.enabled : source.tonalSource === 'generated',
     },
-    progression: { chords, duration: range(progression.duration, 4, 2, 120) },
+    progression: { chords, duration: range(progression.duration, DEFAULT_CHORD_EDITOR.duration, 2, 120) },
   };
 }
 

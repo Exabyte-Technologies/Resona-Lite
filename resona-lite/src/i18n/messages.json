@@ -2528,5 +2528,71 @@
     "Увеличенный текст (200 %)",
     "文字を拡大（200%）",
     "放大文字（200%）"
+  ],
+  "Open chord progression": [
+    "打开和弦进行",
+    "Abrir progresión de acordes",
+    "कॉर्ड प्रगति खोलें",
+    "فتح تتابع الأوتار",
+    "Abrir progressão de acordes",
+    "Ouvrir la progression d’accords",
+    "Открыть последовательность аккордов",
+    "コード進行を開く",
+    "開啟和弦進行"
+  ],
+  "Close chord progression": [
+    "关闭和弦进行",
+    "Cerrar progresión de acordes",
+    "कॉर्ड प्रगति बंद करें",
+    "إغلاق تتابع الأوتار",
+    "Fechar progressão de acordes",
+    "Fermer la progression d’accords",
+    "Закрыть последовательность аккордов",
+    "コード進行を閉じる",
+    "關閉和弦進行"
+  ],
+  "Enable chord progression": [
+    "启用和弦进行",
+    "Activar progresión de acordes",
+    "कॉर्ड प्रगति चालू करें",
+    "تفعيل تتابع الأوتار",
+    "Ativar progressão de acordes",
+    "Activer la progression d’accords",
+    "Включить последовательность аккордов",
+    "コード進行を有効にする",
+    "啟用和弦進行"
+  ],
+  "Chord transition": [
+    "和弦过渡",
+    "Transición de acordes",
+    "कॉर्ड संक्रमण",
+    "انتقال الأوتار",
+    "Transição de acordes",
+    "Transition d’accords",
+    "Переход между аккордами",
+    "コードの移行",
+    "和弦過渡"
+  ],
+  "Ambient and binaural": [
+    "氛围音乐与双耳节拍",
+    "Ambiental y binaural",
+    "एम्बिएंट और बाइनॉरल",
+    "الأصوات المحيطية والنغمات الثنائية",
+    "Ambiente e binaural",
+    "Ambiance et binaural",
+    "Эмбиент и бинауральные ритмы",
+    "アンビエントとバイノーラル",
+    "氛圍音樂與雙耳節拍"
+  ],
+  "Regenerate chords": [
+    "重新生成和弦",
+    "Regenerar acordes",
+    "कॉर्ड फिर से बनाएँ",
+    "إعادة توليد الأوتار",
+    "Gerar novos acordes",
+    "Régénérer les accords",
+    "Создать новые аккорды",
+    "コードを再生成",
+    "重新產生和弦"
   ]
 }

@@ -65,6 +65,7 @@ export function PlayerProvider({ children }: PropsWithChildren) {
       const alreadyPlaying = current?.playing || current?.ambientPlaying || current?.noisePlaying;
       const startsAudio = ['toggleSession', 'toggle', 'toggleAmbient', 'toggleNoise', 'playSession',
         'generate', 'toggleChordProgression', 'replayChordProgression'].includes(action) ||
+        (action === 'setChordProgressionEnabled' && args[0] === true) ||
         (action === 'setTonalSource' && args[0] === 'generated');
       if (!alreadyPlaying && startsAudio) {
         await activatePlayback();
@@ -93,8 +94,11 @@ export function PlayerProvider({ children }: PropsWithChildren) {
     if (pendingConfiguration.current) return;
     const current = libraryRef.current;
     const configuration = { ...current.current, editor: { ...current.current.editor, ...patch } };
-    if (!sameConfiguration(configuration, current.current)) commitLibrary({ ...current, current: configuration });
-  }, [commitLibrary]);
+    if (!sameConfiguration(configuration, current.current)) {
+      commitLibrary({ ...current, current: configuration });
+      command('setChordOptions', configuration.editor);
+    }
+  }, [commitLibrary, command]);
   const saveConfiguration = (name: string) => {
     const current = libraryRef.current;
     return commitLibrary({ ...current, saved: [
@@ -181,7 +185,7 @@ export function PlayerProvider({ children }: PropsWithChildren) {
     const c = message.config, a = c.ambient;
     const current = libraryRef.current;
     const configuration = normalizeConfiguration({
-      editor: restoring ? requestedEditor.current : current.current.editor,
+      editor: { ...(restoring ? requestedEditor.current : current.current.editor), enabled: message.chordProgressionEnabled },
       progression: message.savedProgression,
       sound: {
         mode:c.mode, masterVolume:c.master, beatHz:c.beat, droneFrequency:a.droneFrequency,

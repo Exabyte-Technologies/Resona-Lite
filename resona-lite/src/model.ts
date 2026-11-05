@@ -47,7 +47,7 @@ export const DEFAULT_SETTINGS: SoundSettings = {
   leftFrequency: 440 * 2 ** ((53 - 69) / 12) - 3,
   rightFrequency: 440 * 2 ** ((53 - 69) / 12) + 3,
   warmth: 80, movement: 25, space: 82, texture: 20, shimmer: 21, output: 58,
-  chordTransition: 0, binauralChordTransition: 0,
+  chordTransition: 0.5, binauralChordTransition: 0.5,
   pad: 72, flute: 38, strings: 51, bells: 24,
   drone: 58,
   pads: 68,

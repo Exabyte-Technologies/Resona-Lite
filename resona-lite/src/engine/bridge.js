@@ -26,6 +26,10 @@
   const pipeline = { enabled:false, token:0, options:null, playing:null, ready:[], generating:null, nextSetNumber:0 };
   let chordStatus = 'Offline chord model ready to load.';
   let generating = false;
+  // Preference is independent of transport state, so stopping the session never
+  // forgets whether chords should start on the next explicit Play.
+  let chordProgressionEnabled = false;
+  let chordOptions = null;
   let generationRequest = 0;
   let transportPaused = false;
   let savedProgression = { chords: [], duration: 4 };
@@ -63,6 +67,7 @@
       playing: !paused && audio.playing,
       ambientPlaying: !paused && audio.ambientPlaying,
       noisePlaying: !paused && (audio.noisePlaying || noiseRestart !== null),
+      chordProgressionEnabled,
       chordProgressionPlaying: audio.chordProgressionPlaying,
       chordProgressionPaused: paused || audio.chordProgressionPaused,
       chordProgressionIndex: audio.chordProgressionIndex,
@@ -103,6 +108,7 @@
     const token = ++generationRequest;
     const request = { ...options, length:Math.max(2, Math.min(32, Number(options.length) || 8)) };
     const wasPaused = transportPaused;
+    chordProgressionEnabled = true;
     generating = true; chordStatus = 'Generating on this device…'; state();
     await new Promise(resolve => setTimeout(resolve, 0));
     try {
@@ -163,6 +169,8 @@
       generating = false;
       reset(false);
       savedProgression = progression;
+      chordProgressionEnabled = editor.enabled ?? sound.tonalSource === 'generated';
+      chordOptions = optionsFromEditor(editor);
       const ambient = audio.config.ambient;
       ambient.chordProgression = progression.chords.slice();
       audio.progressionTonic = audio.parseChord(progression.chords[0]).root;
@@ -188,9 +196,9 @@
         audio.clearManualHarmonyTimer();
         audio.chordProgressionIndex = 0;
         audio.chordProgressionPaused = false;
-        audio.chordProgressionPlaying = audio.ambientPlaying;
+        audio.chordProgressionPlaying = audio.ambientPlaying && chordProgressionEnabled;
         audio.scheduleProgression();
-        if (editor.continuous) {
+        if (editor.continuous && chordProgressionEnabled) {
           pipeline.enabled = true;
           pipeline.options = { ...editor, seedChords: [] };
           pipeline.playing = makeSet(progression.chords);
@@ -204,6 +212,24 @@
       applyingConfiguration = false;
     }
     state();
+    if (audio.ambientPlaying && !transportPaused) startConfiguredChords();
+  }
+
+  function optionsFromEditor(editor) {
+    return { ...editor, seedChords: (editor.seed || '').split(/[\s,]+/).filter(Boolean) };
+  }
+  function startConfiguredChords() {
+    if (!chordProgressionEnabled || generating) return;
+    if (!audio.config.ambient.chordProgression.length) {
+      if (chordOptions) void generate(chordOptions);
+    } else {
+      if (!audio.chordProgressionPlaying || audio.chordProgressionPaused) audio.toggleChordProgression();
+      if (chordOptions?.continuous && !pipeline.enabled) {
+        reset(true); pipeline.options = chordOptions;
+        pipeline.playing = makeSet(audio.config.ambient.chordProgression);
+        ahead(audio.config.ambient.chordProgression);
+      }
+    }
   }
 
   // WebKit can report a running context whose audio clock has stopped.
@@ -272,7 +298,31 @@
   window.resonaCommand = async command => {
     try {
       const { action, args = [] } = command;
+      const ambientWasPlaying = audio.ambientPlaying;
       if (action === 'applyConfiguration') { outputCheck++; applyConfiguration(args[0], args[1]); return; }
+      if (action === 'setChordOptions') {
+        chordOptions = optionsFromEditor(args[0]);
+        state(); return;
+      }
+      if (action === 'setChordTransitions') {
+        audio.setChordTransition(args[0]);
+        audio.setBinauralChordTransition(args[0]);
+        state(); return;
+      }
+      if (action === 'setChordProgressionEnabled') {
+        chordProgressionEnabled = args[0] === true;
+        if (!chordProgressionEnabled) {
+          generationRequest++; generating = false; reset(false);
+          audio.stopChordProgression();
+        } else {
+          transportPaused = false;
+          startConfiguredChords();
+          if (audio.config.ambient.chordProgression.length && !audio.ambientPlaying) audio.startAmbient();
+          if (pipeline.options?.continuous && !pipeline.ready.length) ahead(audio.config.ambient.chordProgression);
+          await checkOutput();
+        }
+        state(); return;
+      }
       if (action === 'sleepTimer') {
         sleepDeadline = Number.isFinite(args[0]) ? args[0] : null; clearTimeout(sleepTimeout);
         if (sleepDeadline !== null) sleepTimeout = setTimeout(() => expireSleep(), Math.max(0, sleepDeadline - Date.now()));
@@ -286,6 +336,7 @@
         if (!hadTracks) { audio.start(); audio.startAmbient(); }
       }
       else if (action === 'pauseAll') {
+        generationRequest++; generating = false;
         // An idle system pause must not leave an empty graph waiting to resume.
         if (audio.playing || audio.ambientPlaying || audio.noisePlaying) {
           outputCheck++;
@@ -322,6 +373,11 @@
       } else if (action === 'setNoise') {
         changeNoise(args[0]);
       } else {
+        if (action === 'stopChordProgression') chordProgressionEnabled = false;
+        if (action === 'setTonalSource') {
+          chordProgressionEnabled = args[0] === 'generated';
+          if (!chordProgressionEnabled) { generationRequest++; generating = false; reset(false); }
+        }
         if (action === 'stopChordProgression' || (action === 'toggleAmbient' && audio.ambientPlaying && !transportPaused)) {
           generationRequest++;
           generating = false;
@@ -339,9 +395,19 @@
           transportPaused = false;
           if (!alreadyPlaying) audio[action](...args);
         } else audio[action](...args);
+        if (action === 'stopChordProgression') reset(false);
+        if (['toggleChordProgression', 'replayChordProgression'].includes(action)) {
+          chordProgressionEnabled = audio.chordProgressionPlaying && !audio.chordProgressionPaused;
+        }
         if (action === 'setNoise') setTimeout(state, 950);
       }
       if (['playSession', 'toggleSession', 'toggle', 'toggleAmbient', 'toggleNoise', 'toggleChordProgression', 'replayChordProgression', 'setTonalSource'].includes(action)) {
+        // startAmbient in the original engine starts its stored progression. Honor
+        // a saved Stop/disabled choice without replacing its harmony or graph.
+        if (audio.ambientPlaying && ['playSession', 'toggleSession', 'toggleAmbient'].includes(action)) {
+          if (chordProgressionEnabled) startConfiguredChords();
+          else if (!ambientWasPlaying && audio.chordProgressionPlaying) audio.stopChordProgression();
+        }
         if (pipeline.enabled && !pipeline.ready.length) ahead(audio.config.ambient.chordProgression);
         await checkOutput();
       }

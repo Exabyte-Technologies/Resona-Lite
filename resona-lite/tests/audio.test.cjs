@@ -287,3 +287,111 @@ test('generating from pause resumes the same context and leaves the binaural gra
   assert.equal(r.messages.at(-1).paused, false);
   assert.equal(r.audio.config.ambient.tonalSource, 'generated');
 });
+
+function homeChordConfiguration({ enabled = true, chords = [] } = {}) {
+  const configuration = savedSound();
+  configuration.sound.tonalSource = chords.length ? 'generated' : 'manual';
+  configuration.sound.binauralMode = 'difference';
+  configuration.sound.chordTransition = .5;
+  configuration.sound.binauralChordTransition = .5;
+  configuration.editor = { seed:'', length:8, duration:30, temperature:1, topK:10, greedy:false, continuous:true, enabled };
+  configuration.progression = { chords, duration:30 };
+  return configuration;
+}
+const settleGeneration = async r => { r.tick(0); await new Promise(resolve => setImmediate(resolve)); };
+
+test('default Home play generates offline chords and continuous sets without replacing active voices', async () => {
+  const r = runtime({bridge:true});
+  const command = (action,...args) => r.window.resonaCommand({action,args});
+  await command('applyConfiguration',homeChordConfiguration(),1);
+  assert.equal(r.audio.context,null);
+  assert.equal(r.messages.at(-1).chordProgressionEnabled,true);
+  await command('toggleSession');
+  assert.ok(r.messages.at(-1).generating);
+  const voices = r.audio.ambientVoices, oscillator = r.audio.left;
+  await settleGeneration(r);
+  assert.equal(r.audio.config.ambient.chordProgression.length,8);
+  assert.equal(r.audio.config.ambient.chordDuration,30);
+  assert.equal(r.messages.at(-1).pipeline.enabled,true);
+  assert.equal(r.messages.at(-1).pipeline.playing,'A');
+  assert.equal(r.audio.ambientVoices,voices);
+  assert.equal(r.audio.left,oscillator);
+  assert.ok(r.audio.chordProgressionPlaying && r.audio.playing && r.audio.ambientPlaying);
+  await command('toggleSession');
+  assert.equal(r.messages.at(-1).chordProgressionEnabled,true);
+  await command('toggleSession');
+  assert.ok(r.audio.chordProgressionPlaying);
+  assert.equal(r.messages.at(-1).generating,false);
+});
+
+test('Home enable/disable, shared transitions, and Advanced controls synchronize without stopping sound', async () => {
+  const r = runtime({bridge:true});
+  const command = (action,...args) => r.window.resonaCommand({action,args});
+  await command('applyConfiguration',homeChordConfiguration({chords:['C','G']}),1);
+  await command('toggleSession');
+  const voices=r.audio.ambientVoices, oscillator=r.audio.left;
+  await command('setChordProgressionEnabled',false);
+  assert.equal(r.audio.chordTimer,null);
+  assert.equal(r.messages.at(-1).chordProgressionEnabled,false);
+  assert.ok(r.audio.playing && r.audio.ambientPlaying);
+  await command('toggleSession'); await command('toggleSession');
+  assert.equal(r.audio.chordProgressionPlaying,false);
+  await command('setChordProgressionEnabled',true);
+  assert.ok(r.audio.chordTimer);
+  const activeVoices=r.audio.ambientVoices, activeOscillator=r.audio.left;
+  await command('setChordTransitions',1.7);
+  assert.equal(r.audio.config.ambient.chordTransition,1.7);
+  assert.equal(r.audio.config.ambient.binauralChordTransition,1.7);
+  assert.equal(r.audio.ambientVoices,activeVoices);
+  assert.equal(r.audio.left,activeOscillator);
+  await command('setChordTransition',.8);
+  assert.equal(r.audio.config.ambient.chordTransition,.8);
+  assert.equal(r.audio.config.ambient.binauralChordTransition,1.7);
+  await command('toggleChordProgression');
+  assert.equal(r.messages.at(-1).chordProgressionEnabled,false);
+  await command('toggleChordProgression');
+  assert.equal(r.messages.at(-1).chordProgressionEnabled,true);
+  await command('stopChordProgression');
+  assert.equal(r.messages.at(-1).chordProgressionEnabled,false);
+  await command('replayChordProgression');
+  assert.equal(r.messages.at(-1).chordProgressionEnabled,true);
+  assert.ok(voices && oscillator);
+});
+
+test('disabling, pausing, replacing, or sleeping cancels pending automatic generation', async () => {
+  for (const action of ['setChordProgressionEnabled','pauseAll','stopAll','applyConfiguration','setTonalSource']) {
+    const r=runtime({bridge:true});
+    const command=(action,...args)=>r.window.resonaCommand({action,args});
+    await command('applyConfiguration',homeChordConfiguration(),1);
+    await command('toggleSession');
+    assert.equal(r.messages.at(-1).generating,true);
+    if (action==='applyConfiguration') await command(action,homeChordConfiguration({enabled:false}),2);
+    else await command(action,action==='setTonalSource'?'manual':false);
+    await settleGeneration(r);
+    assert.equal(r.audio.config.ambient.chordProgression.length,0,action);
+    assert.equal(r.messages.at(-1).generating,false,action);
+    assert.equal(r.audio.chordProgressionPlaying,false,action);
+  }
+});
+
+test('Home enable from idle generates chords, and later Play respects a disabled saved choice', async () => {
+  const r=runtime({bridge:true});
+  const command=(action,...args)=>r.window.resonaCommand({action,args});
+  await command('applyConfiguration',homeChordConfiguration({enabled:false}),1);
+  await command('toggleSession');
+  assert.equal(r.messages.at(-1).generating,false);
+  await command('toggleSession');
+  await command('setChordOptions',{seed:'C G',length:4,duration:18,temperature:1,topK:10,greedy:true,continuous:false});
+  await command('setChordProgressionEnabled',true);
+  await settleGeneration(r);
+  assert.equal(r.audio.config.ambient.chordProgression.length,4);
+  assert.equal(r.audio.config.ambient.chordDuration,18);
+  assert.ok(r.audio.ambientPlaying && r.audio.chordProgressionPlaying);
+  await command('stopAll');
+  await command('applyConfiguration',homeChordConfiguration({enabled:false,chords:['C','G']}),2);
+  assert.equal(r.messages.at(-1).chordProgressionEnabled,false);
+  await command('playSession');
+  assert.ok(r.audio.playing && r.audio.ambientPlaying);
+  assert.equal(r.audio.chordProgressionPlaying,false);
+  assert.equal(r.audio.chordTimer,null);
+});

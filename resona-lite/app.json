@@ -2,13 +2,13 @@
   "expo": {
     "name": "Resona Lite",
     "slug": "resona-lite",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/resona-icon-gradient.png",
     "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "com.resona.lite",
-      "buildNumber": "8",
+      "buildNumber": "9",
       "supportsTablet": true,
       "infoPlist": {
         "UISupportedInterfaceOrientations~ipad": [
@@ -47,7 +47,8 @@
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.MODIFY_AUDIO_SETTINGS"
-      ]
+      ],
+      "versionCode": 4
     },
     "web": {
       "favicon": "./assets/resona-icon-gradient.png"
