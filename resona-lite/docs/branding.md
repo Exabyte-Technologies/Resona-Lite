@@ -3,6 +3,12 @@
 The app icon, launch screen and header use `assets/resona-icon-gradient.png`.
 The original padded icon is preserved in `assets/resona-icon-padded.png`.
 
+Android adaptive icons reuse the gradient artwork with a proportional inset
+applied by `plugins/with-resona-icon.js` after Expo generates the native resources.
+This compensates for Android's 108-unit foreground layer and 72-unit visible area,
+preserving the iOS artwork's margins for both standard and round launcher icons.
+A new Android native build is required for launcher icon changes.
+
 Mode: edit with the built-in image generation tool, using the padded original as reference.
 
 Exact prompt:

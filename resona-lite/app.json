@@ -48,7 +48,7 @@
       "permissions": [
         "android.permission.MODIFY_AUDIO_SETTINGS"
       ],
-      "versionCode": 4
+      "versionCode": 5
     },
     "web": {
       "favicon": "./assets/resona-icon-gradient.png"
@@ -80,7 +80,8 @@
           "color": "#83c9bd"
         }
       ],
-      "./plugins/with-resona-playback"
+      "./plugins/with-resona-playback",
+      "./plugins/with-resona-icon"
     ],
     "extra": {
       "router": {
