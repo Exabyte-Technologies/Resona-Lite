@@ -2,6 +2,8 @@
 
 **A little space to reset.**
 
+[![Download on the App Store](https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg)](https://apps.apple.com/app/resona-lite/id6829783715)
+
 Resona Lite brings the sound of [Resona](https://github.com/Exabyte-Technologies/Resona)
 to your phone. It creates an evolving mix of ambient music, gentle tones and natural
 textures for moments when you want to rest, meditate, focus or take a quiet break.
